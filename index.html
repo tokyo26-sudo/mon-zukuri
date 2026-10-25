@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>紋づくり v0.4</title>
+<title>紋づくり v0.7</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%238a2b1d'/><circle cx='32' cy='32' r='24.5' fill='none' stroke='%23fff' stroke-width='5'/><g fill='%23fff'><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%280 32 32%29'/><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%2890 32 32%29'/><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%28180 32 32%29'/><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%28270 32 32%29'/></g><circle cx='32' cy='32' r='3.4' fill='%238a2b1d'/></svg>">
 <style>
 :root{
   --bg:#f6f4ef; --panel:#ffffff; --ink:#1d1b18; --sub:#6b665e; --line:#e2ddd3;
@@ -73,6 +74,10 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
 #dview.drag{cursor:grabbing}
 #dpaper{fill:#fff;stroke:var(--line);stroke-width:1;vector-effect:non-scaling-stroke}
 .gd{fill:none;stroke:var(--guide);stroke-width:1;vector-effect:non-scaling-stroke;stroke-dasharray:5 4;pointer-events:none}
+.gd.on{stroke-width:2.2;stroke-dasharray:none}
+.ghit{fill:none;stroke:transparent;stroke-width:11;vector-effect:non-scaling-stroke;pointer-events:stroke}
+.ghit:hover{stroke:var(--guide);stroke-opacity:.18}
+.gctr{fill:transparent;stroke:var(--guide);stroke-width:1.2;vector-effect:non-scaling-stroke;cursor:move;pointer-events:all}
 .gpt{fill:var(--guide);pointer-events:none}
 .lo{fill:none;stroke:var(--c-bez);stroke-width:1;vector-effect:non-scaling-stroke;opacity:.7;pointer-events:none}
 .hit{fill:none;stroke:transparent;stroke-width:12;vector-effect:non-scaling-stroke;cursor:pointer}
@@ -104,7 +109,7 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
 </head>
 <body>
 <header>
-  <h1>紋づくり<small>v0.4</small></h1>
+  <h1>紋づくり<small>v0.7</small></h1>
   <div class="tabs">
     <button class="tab on" data-tab="trace">写す</button>
     <button class="tab" data-tab="draw">描く</button>
@@ -196,8 +201,10 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
   <aside id="drawSide" style="display:none">
     <h2>ファイル</h2>
     <button class="btn" id="dNew">新しく</button>
-    <button class="btn" id="dSave">保存（.json）</button>
     <button class="btn" id="dOpen">開く</button>
+    <button class="btn primary" id="dSave">保存</button>
+    <button class="btn" id="dSaveAs">名前を付けて保存</button>
+    <div class="note" id="dFileName">まだ保存してないダカラ</div>
     <input type="file" id="dFile" accept=".json,application/json" hidden>
     <div><button class="btn" id="dUndo">↶ 戻す</button><button class="btn" id="dRedo">↷ やり直す</button></div>
 
@@ -214,14 +221,15 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
     <div id="inspector" class="note">レイヤーを選んで、点や線をクリックしてネ</div>
 
     <h2>ガイド</h2>
-    <button class="btn" id="gLine">＋直線</button>
+    <button class="btn" id="gLine">＋縦線</button>
+    <button class="btn" id="gHLine">＋横線</button>
     <button class="btn" id="gRadial">＋放射</button>
     <button class="btn" id="gCircle">＋円</button>
     <button class="btn" id="gGrid">＋方眼</button>
     <div id="guideList" class="list"></div>
     <label class="chk"><input type="checkbox" id="snapOn" checked>ガイドに吸いつく</label>
     <label class="chk"><input type="checkbox" id="snapNodes" checked>ほかの点にも吸いつく</label>
-    <div class="note">Altキーを押しながらだと吸いつかない。矢印キーで点を1ずつ（Shiftで10ずつ）動かせる。</div>
+    <div class="note">ガイドは画面でつかんで動かせる（縦線は左右、横線は上下、円は輪で半径・まん中で位置）。Altキーを押しながらだと吸いつかない。矢印キーで点を1ずつ（Shiftで10ずつ）動かせる。</div>
 
     <h2>下絵</h2>
     <label class="chk"><input type="checkbox" id="uShow" checked>下絵を表示</label>
@@ -256,7 +264,7 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
       <g id="dsnap"></g>
     </svg>
     <div class="empty" id="dempty"><b>まだ何もないダカラ</b><div>左の「＋円」などで部品を足すか、「写す」タブの「描くへ送る」で持ってきてネ</div></div>
-    <div class="hint">ホイール：拡大縮小　空いた所をドラッグ：移動　ダブルクリック：全体表示　Ctrl+Z：戻す</div>
+    <div class="hint">ホイール：拡大縮小　空いた所をドラッグ：移動　ダブルクリック：全体表示　Ctrl+Z：戻す　Ctrl+S：保存</div>
   </section>
 </main>
 <div class="toast" id="toast"></div>
@@ -1238,9 +1246,31 @@ function svgText() {
   const attr = o.mode === 'line' ? `fill="none" stroke="#000" stroke-width="${sw}" stroke-linejoin="round"` : `fill="#000" fill-rule="evenodd"`;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${o.W} ${o.H}" width="${o.W}" height="${o.H}">\n<path ${attr} d="${o.d}"/>\n</svg>\n`;
 }
+// 保存場所と名前を選んで保存（選べないブラウザは名前だけ聞いてダウンロード）
+const FTYPES = {
+  json: { description: '紋づくりプロジェクト', accept: { 'application/json': ['.json'] } },
+  svg: { description: 'SVG画像', accept: { 'image/svg+xml': ['.svg'] } },
+  png: { description: 'PNG画像', accept: { 'image/png': ['.png'] } }
+};
+async function writeHandle(hd, blob) { const w = await hd.createWritable(); await w.write(blob); await w.close(); }
+async function saveBlob(blob, name, kind) {
+  if (window.showSaveFilePicker) {
+    try {
+      const hd = await window.showSaveFilePicker({ suggestedName: name, types: [FTYPES[kind]] });
+      await writeHandle(hd, blob); toast(hd.name + ' を保存したダカラ'); return hd;
+    } catch (e) {
+      if (e && e.name === 'AbortError') return null;
+      console.warn(e);
+    }
+  }
+  let n = prompt('ファイル名（保存場所はブラウザのダウンロード先）', name);
+  if (!n) return null;
+  const ext = '.' + kind; if (!n.toLowerCase().endsWith(ext)) n += ext;
+  dl(blob, n); return { name: n, fake: true };
+}
 function dl(blob, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); }
 const need = () => { if (!S.res) { toast('まず画像を入れてネ'); return false; } return true; };
-$('svgBtn').onclick = () => { if (need()) dl(new Blob([svgText()], { type: 'image/svg+xml' }), 'mon.svg'); };
+$('svgBtn').onclick = () => { if (need()) saveBlob(new Blob([svgText()], { type: 'image/svg+xml' }), 'mon.svg', 'svg'); };
 $('copyBtn').onclick = async () => {
   if (!need()) return;
   try { await navigator.clipboard.writeText(outInfo().d); toast('パスをコピーしたダカラ'); } catch { toast('コピーできなかった…'); }
@@ -1253,7 +1283,7 @@ $('pngBtn').onclick = () => {
   const p = new Path2D(o.d);
   if (o.mode === 'line') { x.lineWidth = Math.max(1, Math.round(o.W / 400)); x.lineJoin = 'round'; x.stroke(p); }
   else { x.fillStyle = '#000'; x.fill(p, 'evenodd'); }
-  c.toBlob(b => dl(b, 'mon.png'));
+  c.toBlob(b => saveBlob(b, 'mon.png', 'png'));
 };
 
 showVals();
@@ -1318,9 +1348,9 @@ const Draw = (() => {
     D.fut = [];
   }
   function snapshotBefore() { return JSON.stringify(D.doc); }
-  function pushState(prev) { D.hist.push(prev); if (D.hist.length > 120) D.hist.shift(); D.fut = []; }
-  function undo() { if (!D.hist.length) return toast('もう戻れないダカラ'); D.fut.push(JSON.stringify(D.doc)); D.doc = JSON.parse(D.hist.pop()); fixSel(); renderAll(); }
-  function redo() { if (!D.fut.length) return; D.hist.push(JSON.stringify(D.doc)); D.doc = JSON.parse(D.fut.pop()); fixSel(); renderAll(); }
+  function pushState(prev) { D.hist.push(prev); if (D.hist.length > 120) D.hist.shift(); D.fut = []; D.dirty = true; if (typeof showFile === 'function') showFile(); }
+  function undo() { if (!D.hist.length) return toast('もう戻れないダカラ'); D.fut.push(JSON.stringify(D.doc)); D.doc = JSON.parse(D.hist.pop()); D.dirty = true; showFile(); fixSel(); renderAll(); }
+  function redo() { if (!D.fut.length) return; D.hist.push(JSON.stringify(D.doc)); D.doc = JSON.parse(D.fut.pop()); D.dirty = true; showFile(); fixSel(); renderAll(); }
   function change(fn) { const prev = snapshotBefore(); fn(); pushState(prev); renderAll(); }
   function fixSel() { if (D.sel && !D.doc.layers[D.sel.li]) D.sel = null; if (D.sel && D.sel.kind !== 'layer') { const L = curLoop(); if (!L) D.sel = { li: D.sel.li, kind: 'layer' }; } }
 
@@ -1475,19 +1505,18 @@ const Draw = (() => {
   }
 
   // ---------- ガイド ----------
-  function guideGeoms() {
+  function guideGeoms(skip = -1) {
     const G = [], pts = [];
-    const ext = SIZE * 4;
-    for (const g of D.doc.guides) {
-      if (!g.vis) continue;
-      if (g.type === 'line') { const a = g.ang * Math.PI / 180; G.push({ k: 'line', p: [g.x, g.y], d: [Math.cos(a), Math.sin(a)] }); }
+    D.doc.guides.forEach((g, gi) => {
+      if (!g.vis || gi === skip) return;
+      if (g.type === 'line') { const a = g.ang * Math.PI / 180; G.push({ k: 'line', gi, p: [g.x, g.y], d: [Math.cos(a), Math.sin(a)] }); }
       if (g.type === 'radial') {
         pts.push([g.x, g.y]);
-        for (let j = 0; j < g.n; j++) { const a = (g.off + j * 360 / g.n) * Math.PI / 180; G.push({ k: 'ray', p: [g.x, g.y], d: [Math.cos(a), Math.sin(a)] }); }
+        for (let j = 0; j < g.n; j++) { const a = (g.off + j * 360 / g.n) * Math.PI / 180; G.push({ k: 'ray', gi, p: [g.x, g.y], d: [Math.cos(a), Math.sin(a)] }); }
       }
-      if (g.type === 'circle') { pts.push([g.x, g.y]); G.push({ k: 'circle', c: [g.x, g.y], r: g.r }); }
-      if (g.type === 'grid') G.push({ k: 'grid', s: Math.max(1, g.s), ox: g.x, oy: g.y });
-    }
+      if (g.type === 'circle') { pts.push([g.x, g.y]); G.push({ k: 'circle', gi, c: [g.x, g.y], r: g.r }); }
+      if (g.type === 'grid') G.push({ k: 'grid', gi, s: Math.max(1, g.s), ox: g.x, oy: g.y });
+    });
     // 交点
     const ip = [];
     const lineLike = g => g.k === 'line' || g.k === 'ray';
@@ -1519,10 +1548,26 @@ const Draw = (() => {
     guideGeoms();
     const g = $('dguides'); g.textContent = '';
     const ext = SIZE * 4;
+    const act = D.drag && D.drag.mode === 'guide' ? D.drag.gi : -1;
+    const rc = 6 * px(), doneC = new Set();
     for (const G of D.geoms) {
-      if (G.k === 'line') ns('line', { x1: G.p[0] - G.d[0] * ext, y1: G.p[1] - G.d[1] * ext, x2: G.p[0] + G.d[0] * ext, y2: G.p[1] + G.d[1] * ext, class: 'gd' }, g);
-      if (G.k === 'ray') ns('line', { x1: G.p[0], y1: G.p[1], x2: G.p[0] + G.d[0] * ext, y2: G.p[1] + G.d[1] * ext, class: 'gd' }, g);
-      if (G.k === 'circle') ns('circle', { cx: G.c[0], cy: G.c[1], r: G.r, class: 'gd' }, g);
+      const on = G.gi === act ? ' on' : '';
+      if (G.k === 'line') {
+        const at = { x1: G.p[0] - G.d[0] * ext, y1: G.p[1] - G.d[1] * ext, x2: G.p[0] + G.d[0] * ext, y2: G.p[1] + G.d[1] * ext };
+        ns('line', Object.assign({ class: 'gd' + on }, at), g);
+        const cur = Math.abs(G.d[0]) < 0.02 ? 'ew-resize' : Math.abs(G.d[1]) < 0.02 ? 'ns-resize' : 'move';
+        ns('line', Object.assign({ class: 'ghit', style: 'cursor:' + cur, 'data-g': G.gi, 'data-gk': 'line' }, at), g);
+      }
+      if (G.k === 'ray') ns('line', { x1: G.p[0], y1: G.p[1], x2: G.p[0] + G.d[0] * ext, y2: G.p[1] + G.d[1] * ext, class: 'gd' + on }, g);
+      if (G.k === 'circle') {
+        ns('circle', { cx: G.c[0], cy: G.c[1], r: G.r, class: 'gd' + on }, g);
+        ns('circle', { cx: G.c[0], cy: G.c[1], r: G.r, class: 'ghit', style: 'cursor:nwse-resize', 'data-g': G.gi, 'data-gk': 'ring' }, g);
+      }
+      if ((G.k === 'circle' || G.k === 'ray') && !doneC.has(G.gi)) {
+        doneC.add(G.gi);
+        const c = G.c || G.p;
+        ns('circle', { cx: c[0], cy: c[1], r: rc, class: 'gctr', 'data-g': G.gi, 'data-gk': 'center' }, g);
+      }
       if (G.k === 'grid') {
         let d = '';
         const x0 = G.ox - Math.ceil(G.ox / G.s) * G.s;
@@ -1602,6 +1647,7 @@ const Draw = (() => {
   }
   function addGuide(g) { change(() => D.doc.guides.push(Object.assign({ vis: true }, g))); }
   $('gLine').onclick = () => addGuide({ type: 'line', x: SIZE / 2, y: SIZE / 2, ang: 90 });
+  $('gHLine').onclick = () => addGuide({ type: 'line', x: SIZE / 2, y: SIZE / 2, ang: 0 });
   $('gRadial').onclick = () => addGuide({ type: 'radial', x: SIZE / 2, y: SIZE / 2, n: 6, off: -90 });
   $('gCircle').onclick = () => addGuide({ type: 'circle', x: SIZE / 2, y: SIZE / 2, r: 300 });
   $('gGrid').onclick = () => addGuide({ type: 'grid', s: 50, x: 0, y: 0 });
@@ -1866,8 +1912,52 @@ const Draw = (() => {
       } else if (ds.h === 'cc' || ds.h === 'cr') D.sel = { li, kind: 'circle', loop: lp };
       D.drag = d; renderCanvas(); renderInspector(); return;
     }
+    if (ds.g != null) {
+      const gi = +ds.g;
+      D.drag = Object.assign(base, { mode: 'guide', gi, gk: ds.gk, g0: clone(D.doc.guides[gi]) });
+      return;
+    }
     D.drag = Object.assign(base, { mode: 'pan', vb: Object.assign({}, D.vb), target: t });
   });
+  // ガイドを動かすとき吸いつく先：ほかのガイドの交点・中心、図形の点、用紙のまん中と角
+  function guideTargets(gi) {
+    guideGeoms(gi);
+    const pts = D.ipts.slice();
+    pts.push([SIZE / 2, SIZE / 2], [0, 0], [SIZE, 0], [0, SIZE], [SIZE, SIZE]);
+    D.doc.layers.forEach(ly => { if (ly.vis) ly.loops.forEach(L => { if (L.circle) pts.push(L.circle.c); else L.nodes.forEach(n => pts.push([n.x, n.y])); }); });
+    return pts;
+  }
+  function dragGuide(d, e) {
+    const g = D.doc.guides[d.gi], g0 = d.g0, m = toDoc(e), thr = 10 * px();
+    const free = d.alt;
+    D.snapMk = null;
+    if (d.gk === 'line') {
+      const a = g0.ang * Math.PI / 180, nx = -Math.sin(a), ny = Math.cos(a);
+      let t = (m[0] - d.p0[0]) * nx + (m[1] - d.p0[1]) * ny;
+      if (!free) {
+        let bd = thr, bt = null, bp = null;
+        for (const q of guideTargets(d.gi)) { const tq = (q[0] - g0.x) * nx + (q[1] - g0.y) * ny; if (Math.abs(tq - t) < bd) { bd = Math.abs(tq - t); bt = tq; bp = q; } }
+        if (bt != null) { t = bt; D.snapMk = bp; }
+      }
+      g.x = f2(g0.x + nx * t); g.y = f2(g0.y + ny * t);
+    } else if (d.gk === 'ring') {
+      let r = Math.hypot(m[0] - g0.x, m[1] - g0.y);
+      if (!free) {
+        let bd = thr, br = null, bp = null;
+        for (const q of guideTargets(d.gi)) { const rq = Math.hypot(q[0] - g0.x, q[1] - g0.y); if (rq > 1 && Math.abs(rq - r) < bd) { bd = Math.abs(rq - r); br = rq; bp = q; } }
+        if (br != null) { r = br; D.snapMk = bp; }
+      }
+      g.r = f2(Math.max(0.5, r));
+    } else if (d.gk === 'center') {
+      let q = [g0.x + m[0] - d.p0[0], g0.y + m[1] - d.p0[1]];
+      if (!free) {
+        let bd = thr, bp = null;
+        for (const c of guideTargets(d.gi)) { const dd = Math.hypot(c[0] - q[0], c[1] - q[1]); if (dd < bd) { bd = dd; bp = c; } }
+        if (bp) { q = bp.slice(); D.snapMk = bp; }
+      }
+      g.x = f2(q[0]); g.y = f2(q[1]);
+    }
+  }
   window.addEventListener('mousemove', e => {
     const d = D.drag; if (!d) return;
     if (!d.moved && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 3) d.moved = true;
@@ -1879,6 +1969,7 @@ const Draw = (() => {
       D.vb.x = d.vb.x - (e.clientX - d.x) / r.width * d.vb.w; D.vb.y = d.vb.y - (e.clientY - d.y) / r.height * d.vb.h; setVB();
       return;
     }
+    if (d.mode === 'guide') { dragGuide(d, e); renderCanvas(); return; }
     const L = D.doc.layers[d.li].loops[d.loop];
     if (d.h === 'node') {
       // ドラッグ開始時の形から計算しなおす（誤差がたまらないように）
@@ -1900,7 +1991,7 @@ const Draw = (() => {
   window.addEventListener('mouseup', () => {
     const d = D.drag; if (!d) return;
     D.drag = null; D.snapMk = null; dv.classList.remove('drag');
-    if (d.mode === 'handle') { if (d.moved) pushState(d.prev); renderAll(); return; }
+    if (d.mode === 'handle' || d.mode === 'guide') { if (d.moved) pushState(d.prev); renderAll(); return; }
     if (d.moved) { renderCanvas(); return; }
     const ds = d.target.dataset || {};
     if (ds.layer != null) select({ li: +ds.layer, kind: 'layer' });
@@ -1937,15 +2028,51 @@ const Draw = (() => {
 
   // ---------- ファイル ----------
   $('dUndo').onclick = undo; $('dRedo').onclick = redo;
-  $('dNew').onclick = () => { if (D.doc.layers.length && !confirm('今の内容を消して、新しく始める？')) return; change(() => { D.doc = { v: 1, size: SIZE, layers: [], guides: [], under: null }; D.sel = null; }); };
-  $('dSave').onclick = () => dl(new Blob([JSON.stringify(D.doc)], { type: 'application/json' }), 'mon-project.json');
-  $('dOpen').onclick = () => $('dFile').click();
+  $('dNew').onclick = () => { if (D.doc.layers.length && !confirm('今の内容を消して、新しく始める？')) return; change(() => { D.doc = { v: 1, size: SIZE, layers: [], guides: [], under: null }; D.sel = null; }); D.file = null; D.dirty = false; showFile(); };
+  // 保存先のファイルを覚えて「保存」は上書き
+  D.file = null; D.dirty = false;
+  function baseName() { return D.file ? D.file.name.replace(/\.json$/i, '') : 'mon-project'; }
+  function showFile() {
+    const el = $('dFileName');
+    if (!D.file) el.textContent = D.doc.layers.length ? 'まだ保存してないダカラ' : '';
+    else el.textContent = `今のファイル：${D.file.name}${D.dirty ? '（変更あり）' : '（保存ずみ）'}`;
+  }
+  const projBlob = () => new Blob([JSON.stringify(D.doc)], { type: 'application/json' });
+  async function saveAs() {
+    const r = await saveBlob(projBlob(), baseName() + '.json', 'json');
+    if (r) { D.file = r; D.dirty = false; showFile(); }
+  }
+  async function save() {
+    if (!D.file || D.file.fake) return saveAs();
+    try { await writeHandle(D.file, projBlob()); D.dirty = false; showFile(); toast(D.file.name + ' に上書き保存したダカラ'); }
+    catch (e) { if (e && e.name === 'AbortError') return; saveAs(); }
+  }
+  function loadText(txt, file) {
+    try { const doc = JSON.parse(txt); if (!doc.layers) throw 0; change(() => { D.doc = doc; D.sel = null; }); D.file = file; D.dirty = false; showFile(); toast('開いたダカラ'); }
+    catch { toast('このファイルは読めないダカラ'); }
+  }
+  $('dSave').onclick = save;
+  $('dSaveAs').onclick = saveAs;
+  $('dOpen').onclick = async () => {
+    if (window.showOpenFilePicker) {
+      try {
+        const [hd] = await window.showOpenFilePicker({ types: [FTYPES.json], multiple: false });
+        const f = await hd.getFile(); loadText(await f.text(), hd); return;
+      } catch (e) { if (e && e.name === 'AbortError') return; console.warn(e); }
+    }
+    $('dFile').click();
+  };
   $('dFile').onchange = e => {
     const f = e.target.files[0]; if (!f) return;
     const r = new FileReader();
-    r.onload = () => { try { const doc = JSON.parse(r.result); if (!doc.layers) throw 0; change(() => { D.doc = doc; D.sel = null; }); toast('開いたダカラ'); } catch { toast('このファイルは読めないダカラ'); } };
+    r.onload = () => loadText(r.result, { name: f.name, fake: true });
     r.readAsText(f); e.target.value = '';
   };
+  window.addEventListener('keydown', e => {
+    if ($('dstage').style.display === 'none') return;
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); e.shiftKey ? saveAs() : save(); }
+  });
+  window.addEventListener('beforeunload', e => { if (D.dirty) { e.preventDefault(); e.returnValue = ''; } });
   $('uShow').onchange = renderCanvas; $('uOp').oninput = renderCanvas;
   $('uOpen').onclick = () => $('uFile').click();
   $('uFile').onchange = e => {
@@ -2066,7 +2193,7 @@ const Draw = (() => {
   function doExport(kind) {
     const o = exportData(); if (!o) return toast('書き出す形がないダカラ');
     $('dExpNote').textContent = o.warn || (o.keepsArcs ? '円弧はそのまま円弧で書き出したヨ' : 'レイヤーを合成したので、円弧はベジェ曲線（ほぼ同じ形）になってるヨ');
-    if (kind === 'svg') dl(new Blob([svgOut(o)], { type: 'image/svg+xml' }), 'mon.svg');
+    if (kind === 'svg') saveBlob(new Blob([svgOut(o)], { type: 'image/svg+xml' }), baseName() + '.svg', 'svg');
     if (kind === 'copy') navigator.clipboard.writeText(o.d).then(() => toast('パスをコピーしたダカラ'), () => toast('コピーできなかった…'));
     if (kind === 'png') {
       const c = document.createElement('canvas'); c.width = o.W; c.height = o.H; const x = c.getContext('2d');
@@ -2074,7 +2201,7 @@ const Draw = (() => {
       const p = new Path2D(o.d);
       if (o.mode === 'line') { x.lineWidth = Math.max(1, Math.round(Math.max(o.W, o.H) / 400)); x.lineJoin = 'round'; x.stroke(p); }
       else { x.fillStyle = '#000'; x.fill(p, 'evenodd'); }
-      c.toBlob(b => dl(b, 'mon.png'));
+      c.toBlob(b => saveBlob(b, baseName() + '.png', 'png'));
     }
     return o;
   }
