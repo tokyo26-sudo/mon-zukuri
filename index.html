@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>紋づくり v0.7</title>
+<title>紋づくり v0.14</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%238a2b1d'/><circle cx='32' cy='32' r='24.5' fill='none' stroke='%23fff' stroke-width='5'/><g fill='%23fff'><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%280 32 32%29'/><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%2890 32 32%29'/><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%28180 32 32%29'/><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%28270 32 32%29'/></g><circle cx='32' cy='32' r='3.4' fill='%238a2b1d'/></svg>">
 <style>
 :root{
@@ -73,14 +73,22 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
 #dview{width:100%;height:100%;display:block}
 #dview.drag{cursor:grabbing}
 #dpaper{fill:#fff;stroke:var(--line);stroke-width:1;vector-effect:non-scaling-stroke}
-.gd{fill:none;stroke:var(--guide);stroke-width:1;vector-effect:non-scaling-stroke;stroke-dasharray:5 4;pointer-events:none}
+.gd{fill:none;stroke:var(--guide);stroke-width:1.2;vector-effect:non-scaling-stroke;stroke-dasharray:5 4;pointer-events:none}
 .gd.on{stroke-width:2.2;stroke-dasharray:none}
 .ghit{fill:none;stroke:transparent;stroke-width:11;vector-effect:non-scaling-stroke;pointer-events:stroke}
 .ghit:hover{stroke:var(--guide);stroke-opacity:.18}
-.gctr{fill:transparent;stroke:var(--guide);stroke-width:1.2;vector-effect:non-scaling-stroke;cursor:move;pointer-events:all}
+.gctr{fill:rgba(255,255,255,.55);stroke:var(--guide);stroke-width:1.2;vector-effect:non-scaling-stroke;cursor:move;pointer-events:all}
 .gpt{fill:var(--guide);pointer-events:none}
+.glab{fill:var(--guide);stroke:var(--canvas);paint-order:stroke;stroke-linejoin:round;font-variant-numeric:tabular-nums;pointer-events:none;user-select:none}
 .lo{fill:none;stroke:var(--c-bez);stroke-width:1;vector-effect:non-scaling-stroke;opacity:.7;pointer-events:none}
 .hit{fill:none;stroke:transparent;stroke-width:12;vector-effect:non-scaling-stroke;cursor:pointer}
+.hit[data-seg]{cursor:move}
+.fhit{fill:transparent;stroke:none;pointer-events:fill;cursor:move}
+.lo.ms{stroke:var(--accent);stroke-width:1.8;opacity:1}
+.glock .ghit,.glock .gctr{pointer-events:none}
+.band{fill:var(--accent);fill-opacity:.08;stroke:var(--accent);stroke-width:1;stroke-dasharray:4 3;vector-effect:non-scaling-stroke}
+#dview.space{cursor:grab}
+.hit[data-seg]:hover{stroke:var(--accent);stroke-opacity:.25}
 .sseg{fill:none;stroke:var(--accent);stroke-width:2;vector-effect:non-scaling-stroke;pointer-events:none}
 .sseg.on{stroke-width:5}
 .nd{fill:#fff;stroke:var(--accent);stroke-width:1.5;vector-effect:non-scaling-stroke;cursor:move}
@@ -100,6 +108,8 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
 .li .num{width:58px}
 .kv{display:flex;align-items:center;gap:5px;flex-wrap:wrap;font-size:12px;margin:4px 0}
 .kv .num{width:76px}
+.kv textarea{width:100%;min-height:70px;font:13px ui-monospace,monospace;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);padding:5px}
+.li.on2{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--bg))}
 #drawSide{width:350px}
 #drawSide .li .num{width:66px}
 .toast{position:fixed;right:16px;bottom:16px;background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none}
@@ -109,7 +119,7 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
 </head>
 <body>
 <header>
-  <h1>紋づくり<small>v0.7</small></h1>
+  <h1>紋づくり<small>v0.14</small></h1>
   <div class="tabs">
     <button class="tab on" data-tab="trace">写す</button>
     <button class="tab" data-tab="draw">描く</button>
@@ -208,14 +218,29 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
     <input type="file" id="dFile" accept=".json,application/json" hidden>
     <div><button class="btn" id="dUndo">↶ 戻す</button><button class="btn" id="dRedo">↷ やり直す</button></div>
 
-    <h2>部品を足す</h2>
-    <button class="btn" id="addCircle">＋円</button>
-    <button class="btn" id="addRect">＋四角</button>
-    <button class="btn" id="addPoly">＋多角形</button>
-    <input type="number" class="num" id="polyN" value="6" min="3" max="24" step="1" style="width:52px">角
+    <h2>用紙と単位</h2>
+    <div class="kv">単位 <select id="pUnit" style="width:auto"><option value="mm">mm</option><option value="px">px</option></select>
+      用紙 <input type="number" class="num" id="pSize" step="any" min="0.1"> <span class="pu">mm</span> 四方</div>
+    <div class="kv">原点 <select id="pOrigin" style="width:auto">
+      <option value="cu">まん中（上がプラス）</option>
+      <option value="cd">まん中（下がプラス）</option>
+      <option value="tl">左上（下がプラス）</option></select></div>
+    <div class="note">長さの数字は全部この単位（角度は°）。単位や用紙を変えても形はそのまま、数字の見え方と書き出しの大きさが変わるヨ</div>
+
+    <h2>部品を足す（数字で）</h2>
+    <div class="kv">形 <select id="partType" style="width:auto">
+      <option value="circle">円</option><option value="ring">輪</option><option value="rect">四角</option>
+      <option value="poly">多角形</option><option value="bar">太線</option><option value="pts">点を並べる</option></select>
+      新しい部品は <select id="newOp" style="width:auto"><option value="add">足す</option><option value="sub">くり抜く</option></select></div>
+    <div id="partFields"></div>
+    <button class="btn primary" id="partAdd">＋追加</button>
+    <div class="note" id="partNote"></div>
 
     <h2>レイヤー（上ほど後から重なる）</h2>
     <div id="layerList" class="list"></div>
+
+    <h2>回す・裏返す・コピー</h2>
+    <div id="xform" class="note">レイヤーを選んでネ。Shift（かCtrl）を押しながらクリックで何枚もいっしょに選べる</div>
 
     <h2>選んだもの</h2>
     <div id="inspector" class="note">レイヤーを選んで、点や線をクリックしてネ</div>
@@ -227,9 +252,13 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
     <button class="btn" id="gCircle">＋円</button>
     <button class="btn" id="gGrid">＋方眼</button>
     <div id="guideList" class="list"></div>
+    <label class="chk"><input type="checkbox" id="gFront" checked>ガイドを形の上に出す（Gキーで切り替え）</label>
+    <label class="chk"><input type="checkbox" id="gLock">ガイドをロック（さわれない、吸いつきは効く）</label>
+    <label class="chk"><input type="checkbox" id="gHide">ガイドを全部かくす</label>
     <label class="chk"><input type="checkbox" id="snapOn" checked>ガイドに吸いつく</label>
     <label class="chk"><input type="checkbox" id="snapNodes" checked>ほかの点にも吸いつく</label>
-    <div class="note">ガイドは画面でつかんで動かせる（縦線は左右、横線は上下、円は輪で半径・まん中で位置）。Altキーを押しながらだと吸いつかない。矢印キーで点を1ずつ（Shiftで10ずつ）動かせる。</div>
+    <div class="kv">矢印キーで動く量 <input type="number" class="num" id="nudge" step="any" min="0"> <span class="pu">mm</span>（Shiftで10倍）</div>
+    <div class="note">ガイドは画面でつかんで動かせる（縦線は左右、横線は上下、円は輪で半径・まん中で位置）。方眼があると、ガイドは方眼にカチッと吸いつく。Altキーを押しながらだと吸いつかない。矢印キーで、選んだ点・線・円・レイヤーを少しずつ動かせる（動く量は上で決める）。</div>
 
     <h2>下絵</h2>
     <label class="chk"><input type="checkbox" id="uShow" checked>下絵を表示</label>
@@ -243,7 +272,8 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
       <option value="outer">一番外側だけ（シルエット）</option>
       <option value="line">輪郭の線だけ</option>
     </select></div>
-    <div class="row"><label>大きさ（長い辺） <span class="v"><input type="number" class="num" id="dSize" value="1000" min="50" max="8000" step="1">px</span></label></div>
+    <div class="row" id="dpiRow"><label>PNGの解像度 <span class="v"><input type="number" class="num" id="dDpi" value="300" min="36" max="2400" step="1">dpi</span></label></div>
+    <div class="note" id="dSizeInfo"></div>
     <label class="chk"><input type="checkbox" id="dCrop" checked>形ぴったりに切り抜く</label>
     <button class="btn primary" id="dSvg">SVG保存</button>
     <button class="btn" id="dPng">PNG保存</button>
@@ -257,14 +287,14 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
       <defs><mask id="dmask" maskUnits="userSpaceOnUse" x="-20000" y="-20000" width="40000" height="40000"><rect x="-20000" y="-20000" width="40000" height="40000" fill="#000"/><g id="dmaskG"></g></mask></defs>
       <rect id="dpaper" x="0" y="0" width="1000" height="1000"></rect>
       <image id="dunder" preserveAspectRatio="none"></image>
+      <rect id="dfill" x="-20000" y="-20000" width="40000" height="40000" fill="#141414" mask="url(#dmask)" opacity=".88" pointer-events="none"></rect>
       <g id="dguides"></g>
-      <rect x="-20000" y="-20000" width="40000" height="40000" fill="#141414" mask="url(#dmask)" opacity=".88" pointer-events="none"></rect>
       <g id="dout"></g>
       <g id="dhand"></g>
       <g id="dsnap"></g>
     </svg>
     <div class="empty" id="dempty"><b>まだ何もないダカラ</b><div>左の「＋円」などで部品を足すか、「写す」タブの「描くへ送る」で持ってきてネ</div></div>
-    <div class="hint">ホイール：拡大縮小　空いた所をドラッグ：移動　ダブルクリック：全体表示　Ctrl+Z：戻す　Ctrl+S：保存</div>
+    <div class="hint">ホイール：拡大縮小　空いた所をドラッグ：移動　ダブルクリック：全体表示　Shift＋クリック：いくつも選ぶ　スペース＋ドラッグ：画面の移動　Ctrl+Z：戻す　Ctrl+S：保存</div>
   </section>
 </main>
 <div class="toast" id="toast"></div>
@@ -1328,7 +1358,7 @@ const Draw = (() => {
   const TAU = Math.PI * 2;
   const SIZE = 1000;
   const D = {
-    doc: { v: 1, size: SIZE, layers: [], guides: [] },
+    doc: { v: 1, size: SIZE, unit: 'mm', paper: 100, origin: 'center', yUp: true, layers: [], guides: [] },
     sel: null,          // {li, kind:'layer'|'node'|'seg'|'circle', loop, i}
     hist: [], fut: [],
     vb: null, under: null,
@@ -1337,10 +1367,22 @@ const Draw = (() => {
   const dv = $('dview');
   const ns = (tag, at, parent) => { const e = document.createElementNS(SVGNS, tag); for (const k in at) e.setAttribute(k, at[k]); if (parent) parent.appendChild(e); return e; };
   const f2 = v => Math.round(v * 100) / 100;
+  const f3 = v => Math.round(v * 1000) / 1000;
   const P = (p, k = 1) => fmtN(p[0] * k) + ' ' + fmtN(p[1] * k);
   const fmtN = v => { const r = Math.round(v * 100) / 100; return (Object.is(r, -0) ? 0 : r).toString(); };
   const clone = o => JSON.parse(JSON.stringify(o));
   const uid = () => 'L' + (D.seq++);
+
+  // ---------- 単位 ----------
+  const unitStr = () => D.doc.unit === 'px' ? 'px' : 'mm';
+  const U = () => (D.doc.paper > 0 ? D.doc.paper : (unitStr() === 'mm' ? 100 : SIZE)) / SIZE;
+  const toU = v => v * U(), fromU = v => v / U();
+  // 原点と向き（中の座標は左上0・下がプラスのまま。見せる数字だけ変える）
+  const O = () => D.doc.origin === 'center' ? [SIZE / 2, SIZE / 2] : [0, 0];
+  const SY = () => D.doc.origin === 'center' && D.doc.yUp ? -1 : 1;
+  const dX = x => toU(x - O()[0]), dY = y => toU(SY() * (y - O()[1]));
+  const iX = v => O()[0] + fromU(v), iY = v => O()[1] + SY() * fromU(v);
+  const dA = a => SY() < 0 ? -a : a;   // 見せる角度 ⇔ 中の角度（同じ式で行き来できる）
 
   // ---------- 履歴 ----------
   function commit() {
@@ -1412,7 +1454,22 @@ const Draw = (() => {
     D.vb = { x: SIZE / 2 - w / 2, y: SIZE / 2 - h / 2, w, h }; setVB(); renderCanvas();
   }
 
-  function renderAll() { renderCanvas(); renderLayers(); renderInspector(); renderGuideList(); }
+  function renderAll() { renderPaper(); renderCanvas(); renderLayers(); renderXform(); renderInspector(); renderGuideList(); renderParts(); renderSizeInfo(); }
+  function renderPaper() {
+    $('pUnit').value = unitStr();
+    $('pSize').value = f3(U() * SIZE);
+    $('pOrigin').value = D.doc.origin === 'center' ? (D.doc.yUp ? 'cu' : 'cd') : 'tl';
+    document.querySelectorAll('.pu').forEach(e => e.textContent = unitStr());
+    $('nudge').value = nudgeU();
+    $('dpiRow').style.display = unitStr() === 'mm' ? '' : 'none';
+  }
+  $('pUnit').onchange = () => { const u = $('pUnit').value; change(() => { D.doc.unit = u; D.doc.paper = u === 'mm' ? 100 : SIZE; }); };
+  // 矢印キー1回の量（見せる単位で持つ。決めてなければ mm は 0.1、px は 1）
+  D.nudge = {};
+  const nudgeU = () => D.nudge[unitStr()] != null ? D.nudge[unitStr()] : (unitStr() === 'mm' ? 0.1 : 1);
+  $('nudge').onchange = () => { const v = parseFloat($('nudge').value); if (v > 0) D.nudge[unitStr()] = v; $('nudge').value = nudgeU(); };
+  $('pOrigin').onchange = () => { const v = $('pOrigin').value; change(() => { D.doc.origin = v === 'tl' ? 'tl' : 'center'; D.doc.yUp = v === 'cu'; }); };
+  $('pSize').onchange = () => { const v = parseFloat($('pSize').value); if (!(v > 0)) return renderPaper(); change(() => D.doc.paper = v); };
 
   function renderCanvas() {
     if (!D.vb) return;
@@ -1430,11 +1487,13 @@ const Draw = (() => {
     // 輪郭
     const og = $('dout'); og.textContent = '';
     const s = D.sel;
+    // 塗りをつかめるように（ロック中はつかめない）
+    D.doc.layers.forEach((ly, li) => { if (ly.vis && !ly.lock) ns('path', { d: layerD(ly), class: 'fhit', 'fill-rule': 'evenodd', 'data-layer': li }, og); });
     D.doc.layers.forEach((ly, li) => {
       if (!ly.vis) return;
       const d = layerD(ly);
       if (!s || s.li !== li) {
-        ns('path', { d, class: 'lo' }, og);
+        ns('path', { d, class: 'lo' + (D.msel.has(ly.id) ? ' ms' : '') }, og);
         ns('path', { d, class: 'hit', 'data-layer': li }, og);
       }
     });
@@ -1507,6 +1566,7 @@ const Draw = (() => {
   // ---------- ガイド ----------
   function guideGeoms(skip = -1) {
     const G = [], pts = [];
+    if ($('gHide').checked) { D.geoms = G; D.ipts = pts; return; }
     D.doc.guides.forEach((g, gi) => {
       if (!g.vis || gi === skip) return;
       if (g.type === 'line') { const a = g.ang * Math.PI / 180; G.push({ k: 'line', gi, p: [g.x, g.y], d: [Math.cos(a), Math.sin(a)] }); }
@@ -1515,7 +1575,7 @@ const Draw = (() => {
         for (let j = 0; j < g.n; j++) { const a = (g.off + j * 360 / g.n) * Math.PI / 180; G.push({ k: 'ray', gi, p: [g.x, g.y], d: [Math.cos(a), Math.sin(a)] }); }
       }
       if (g.type === 'circle') { pts.push([g.x, g.y]); G.push({ k: 'circle', gi, c: [g.x, g.y], r: g.r }); }
-      if (g.type === 'grid') G.push({ k: 'grid', gi, s: Math.max(1, g.s), ox: g.x, oy: g.y });
+      if (g.type === 'grid') G.push({ k: 'grid', gi, s: Math.max(0.5, g.s), ox: g.x, oy: g.y, major: g.major || 0 });
     });
     // 交点
     const ip = [];
@@ -1547,6 +1607,12 @@ const Draw = (() => {
   function renderGuides() {
     guideGeoms();
     const g = $('dguides'); g.textContent = '';
+    // 上に出す／下にかくす：塗りの前か後ろに置きなおす
+    const fill = $('dfill');
+    // 上：形の線や塗りよりも上（点の取っ手よりは下）。下：黒い塗りよりも下
+    if ($('gFront').checked) { const out = $('dout'); if (g.previousElementSibling !== out) out.after(g); }
+    else if (g.nextElementSibling !== fill) fill.before(g);
+    g.classList.toggle('glock', $('gLock').checked || !$('gFront').checked);
     const ext = SIZE * 4;
     const act = D.drag && D.drag.mode === 'guide' ? D.drag.gi : -1;
     const rc = 6 * px(), doneC = new Set();
@@ -1576,7 +1642,30 @@ const Draw = (() => {
           for (let x = x0; x <= SIZE + 1e-6; x += G.s) d += `M${x} 0V${SIZE}`;
           for (let y = y0; y <= SIZE + 1e-6; y += G.s) d += `M0 ${y}H${SIZE}`;
         }
-        ns('path', { d, class: 'gd', style: 'stroke-dasharray:none;opacity:.45' }, g);
+        ns('path', { d, class: 'gd', style: 'stroke-dasharray:none;opacity:.35' }, g);
+        // めやすの数：画面で約40px以上あくように、何本おきに数字を出すか決める
+        const q = px(), fs = 11 * q, v = D.vb, o = O();
+        let every;
+        if (G.major > 0) { every = G.major; for (let m = 2; every * G.s / q < 40 && m < 400; m++) every = G.major * m; }
+        else every = [1, 2, 4, 5, 10, 20, 25, 50, 100].find(k => k * G.s / q >= 40) || 100;
+        const maj = G.major > 0 ? G.major : every;
+        const ty = Math.max(0, v.y) + 13 * q, lx = Math.max(0, v.x) + 4 * q;
+        const idx = (val, oo) => Math.round((val - oo) / G.s);
+        const isM = (i, m) => ((i % m) + m) % m === 0;
+        let dm = '';
+        for (let x = x0; x <= SIZE + 1e-6; x += G.s) {
+          if (x < -1e-6) continue;
+          const i = idx(x, o[0]);
+          if (isM(i, maj)) dm += `M${x} 0V${SIZE}`;
+          if (isM(i, every) && x >= v.x && x <= v.x + v.w) ns('text', { x: x + 3 * q, y: ty, 'font-size': fs, 'stroke-width': 3 * q, class: 'glab' }, g).textContent = fmtN(f3(dX(x)));
+        }
+        for (let y = y0; y <= SIZE + 1e-6; y += G.s) {
+          if (y < -1e-6) continue;
+          const i = idx(y, o[1]);
+          if (isM(i, maj)) dm += `M0 ${y}H${SIZE}`;
+          if (isM(i, every) && y >= v.y && y <= v.y + v.h && y > ty + fs * 0.3) ns('text', { x: lx, y: y - 3 * q, 'font-size': fs, 'stroke-width': 3 * q, class: 'glab' }, g).textContent = fmtN(f3(dY(y)));
+        }
+        ns('path', { d: dm, class: 'gd', style: G.major > 0 ? 'stroke-dasharray:none;opacity:.95;stroke-width:1.8' : 'stroke-dasharray:none;opacity:.7' }, g);
       }
     }
     const r = 2.2 * px();
@@ -1593,7 +1682,7 @@ const Draw = (() => {
       D.ipts.forEach(tryPt);
       for (const G of D.geoms) if (G.k === 'grid') tryPt([G.ox + Math.round((p[0] - G.ox) / G.s) * G.s, G.oy + Math.round((p[1] - G.oy) / G.s) * G.s]);
     }
-    if ($('snapNodes').checked) D.doc.layers.forEach((ly, li) => { if (!ly.vis) return; ly.loops.forEach((L, lp) => {
+    if ($('snapNodes').checked) D.doc.layers.forEach((ly, li) => { if (!ly.vis || (skip && skip.layers && skip.layers.has(li))) return; ly.loops.forEach((L, lp) => {
       if (L.circle) { if (!(skip && skip.li === li && skip.loop === lp && skip.circle)) tryPt(L.circle.c); return; }
       L.nodes.forEach((n, i) => { if (!(skip && skip.li === li && skip.loop === lp && skip.i === i)) tryPt([n.x, n.y]); });
     }); });
@@ -1625,7 +1714,7 @@ const Draw = (() => {
       line: [['x', 'X'], ['y', 'Y'], ['ang', '角度°']],
       radial: [['x', '中心X'], ['y', 'Y'], ['n', '本数'], ['off', 'ずらし°']],
       circle: [['x', '中心X'], ['y', 'Y'], ['r', '半径']],
-      grid: [['s', '間隔'], ['x', 'ずらしX'], ['y', 'Y']]
+      grid: [['s', '間隔'], ['major', '太線ごと'], ['x', 'ずらしX'], ['y', 'Y']]
     };
     D.doc.guides.forEach((g, gi) => {
       const row = document.createElement('div'); row.className = 'li';
@@ -1635,8 +1724,25 @@ const Draw = (() => {
       row.append(vis, nm);
       for (const [k, lab] of FIELDS[g.type]) {
         const l = document.createElement('span'); l.textContent = lab;
-        const inp = document.createElement('input'); inp.type = 'number'; inp.className = 'num'; inp.step = 'any'; inp.value = f2(g[k]);
-        inp.onchange = () => { let v = parseFloat(inp.value); if (!isFinite(v)) return renderGuideList(); if (k === 'n') v = Math.max(1, Math.min(72, Math.round(v))); if (k === 's' || k === 'r') v = Math.max(0.5, v); change(() => g[k] = v); };
+        // 何の数字か：位置X・位置Y・長さ・角度・そのまま
+        const isGrid = g.type === 'grid';
+        const kind = k === 'x' ? (isGrid ? 'offx' : 'x') : k === 'y' ? (isGrid ? 'offy' : 'y') : (k === 'r' || k === 's') ? 'len' : (k === 'ang' || k === 'off') ? 'ang' : 'raw';
+        const show = () => {
+          const v = g[k] || 0;
+          if (kind === 'x') return f3(dX(v)); if (kind === 'y') return f3(dY(v)); if (kind === 'len') return f3(toU(v)); if (kind === 'ang') return f2(dA(v));
+          if (kind === 'offx' || kind === 'offy') { const o = O()[kind === 'offx' ? 0 : 1], m = ((v - o) % g.s + g.s) % g.s; return f3(toU(m > g.s - 1e-6 ? 0 : m)); }
+          return v;
+        };
+        const inp = document.createElement('input'); inp.type = 'number'; inp.className = 'num'; inp.step = 'any'; inp.value = show();
+        inp.onchange = () => {
+          let v = parseFloat(inp.value); if (!isFinite(v)) return renderGuideList();
+          if (kind === 'x') v = iX(v); else if (kind === 'y') v = iY(v); else if (kind === 'len') v = fromU(v); else if (kind === 'ang') v = dA(v);
+          else if (kind === 'offx') v = O()[0] + fromU(v); else if (kind === 'offy') v = O()[1] + fromU(v);
+          if (k === 'n') v = Math.max(1, Math.min(72, Math.round(v)));
+          if (k === 'major') v = Math.max(0, Math.min(100, Math.round(v)));
+          if (k === 's' || k === 'r') v = Math.max(0.5, v);
+          change(() => g[k] = v);
+        };
         row.append(l, inp);
       }
       const del = document.createElement('button'); del.className = 'ib'; del.textContent = '✕'; del.title = '消す';
@@ -1650,7 +1756,7 @@ const Draw = (() => {
   $('gHLine').onclick = () => addGuide({ type: 'line', x: SIZE / 2, y: SIZE / 2, ang: 0 });
   $('gRadial').onclick = () => addGuide({ type: 'radial', x: SIZE / 2, y: SIZE / 2, n: 6, off: -90 });
   $('gCircle').onclick = () => addGuide({ type: 'circle', x: SIZE / 2, y: SIZE / 2, r: 300 });
-  $('gGrid').onclick = () => addGuide({ type: 'grid', s: 50, x: 0, y: 0 });
+  $('gGrid').onclick = () => addGuide({ type: 'grid', s: 50, x: O()[0], y: O()[1], major: 0 });
 
   // ---------- レイヤー一覧 ----------
   function renderLayers() {
@@ -1658,11 +1764,12 @@ const Draw = (() => {
     const L = D.doc.layers;
     for (let li = L.length - 1; li >= 0; li--) {
       const ly = L[li];
-      const row = document.createElement('div'); row.className = 'li' + (D.sel && D.sel.li === li ? ' on' : '');
+      const row = document.createElement('div'); row.className = 'li' + (D.sel && D.sel.li === li ? ' on' : (D.msel.has(ly.id) ? ' on2' : ''));
       const vis = document.createElement('input'); vis.type = 'checkbox'; vis.checked = ly.vis; vis.title = '表示';
       vis.onchange = () => change(() => ly.vis = vis.checked);
       const nm = document.createElement('input'); nm.className = 'nm'; nm.value = ly.name;
-      nm.onfocus = () => { select({ li, kind: 'layer' }, true); row.classList.add('on'); };
+      nm.onmousedown = e => { if (e.shiftKey || e.ctrlKey || e.metaKey) e.preventDefault(); };
+      nm.onfocus = () => { if (D.sel && D.sel.li === li) return; D.msel.clear(); select({ li, kind: 'layer' }, true); row.classList.add('on'); renderXform(); };
       nm.onchange = () => change(() => ly.name = nm.value);
       const op = document.createElement('select');
       op.innerHTML = '<option value="add">足す</option><option value="sub">くり抜く</option>'; op.value = ly.op;
@@ -1677,7 +1784,16 @@ const Draw = (() => {
       dup.onclick = () => change(() => { const c = clone(ly); c.id = uid(); c.name = ly.name + 'のコピー'; L.splice(li + 1, 0, c); D.sel = { li: li + 1, kind: 'layer' }; });
       const del = document.createElement('button'); del.className = 'ib'; del.textContent = '✕'; del.title = '消す';
       del.onclick = () => change(() => { L.splice(li, 1); D.sel = null; });
-      row.onclick = e => { if (e.target === row) select({ li, kind: 'layer' }); };
+      row.onclick = e => {
+        if (e.target !== row && e.target !== nm) return;
+        if (e.shiftKey || e.ctrlKey || e.metaKey) {
+          if (!D.sel) { select({ li, kind: 'layer' }); return; }
+          if (D.sel.li === li) return;
+          D.msel.has(ly.id) ? D.msel.delete(ly.id) : D.msel.add(ly.id);
+          renderLayers(); renderXform(); return;
+        }
+        if (e.target === row) { D.msel.clear(); select({ li, kind: 'layer' }); }
+      };
       row.append(vis, nm, op, lock, up, dn, dup, del);
       box.append(row);
     }
@@ -1685,13 +1801,16 @@ const Draw = (() => {
   }
 
   // ---------- 選択と「選んだもの」 ----------
-  function select(s, keepFocus) { D.sel = s; renderCanvas(); if (!keepFocus) renderLayers(); else { document.querySelectorAll('#layerList .li').forEach(r => r.classList.remove('on')); } renderInspector(); }
+  function select(s, keepFocus) { if (!s || !D.sel || s.li !== D.sel.li) D.msel.clear(); D.sel = s; renderCanvas(); renderXform(); if (!keepFocus) renderLayers(); else { document.querySelectorAll('#layerList .li').forEach(r => r.classList.remove('on')); } renderInspector(); }
   function curLayer() { return D.sel ? D.doc.layers[D.sel.li] : null; }
   function curLoop() { const ly = curLayer(); return ly && D.sel.loop != null ? ly.loops[D.sel.loop] : null; }
 
-  function numField(box, label, v, onset) {
+  function numU(box, label, v, onset) { return numField(box, label, toU(v), x => onset(fromU(x)), true); }
+  function numX(box, label, v, onset) { return numField(box, label, dX(v), x => onset(iX(x)), true); }
+  function numY(box, label, v, onset) { return numField(box, label, dY(v), x => onset(iY(x)), true); }
+  function numField(box, label, v, onset, u3) {
     const l = document.createElement('span'); l.textContent = label;
-    const inp = document.createElement('input'); inp.type = 'number'; inp.className = 'num'; inp.step = 'any'; inp.value = f2(v);
+    const inp = document.createElement('input'); inp.type = 'number'; inp.className = 'num'; inp.step = 'any'; inp.value = u3 ? f3(v) : f2(v);
     inp.onchange = () => { const x = parseFloat(inp.value); if (isFinite(x)) onset(x); else renderInspector(); };
     box.append(l, inp);
     return inp;
@@ -1710,18 +1829,22 @@ const Draw = (() => {
       box.append(head);
       const r = kv(); r.append('全体を動かす');
       let dx = 0, dy = 0;
-      numField(r, 'X', 0, v => dx = v); numField(r, 'Y', 0, v => dy = v);
+      numU(r, 'X', 0, v => dx = v); numField(r, 'Y', 0, v => dy = SY() * fromU(v), true);
       btn(r, '動かす', () => { if (!ly.lock && (dx || dy)) change(() => moveLayer(ly, dx, dy)); });
       box.append(r);
+      const r3 = kv(); r3.append('角を全部丸める');
+      numU(r3, '半径', D.filletR, v => D.filletR = Math.max(0.01, v));
+      btn(r3, '丸める', () => { if (ly.lock) return; let k = 0; const prev = snapshotBefore(); ly.loops.forEach(L => { if (L.circle) return; for (let i = L.nodes.length - 1; i >= 0; i--) if (!L.nodes[i].smooth && fillet(L, i, D.filletR)) k++; }); if (k) { pushState(prev); renderAll(); toast(k + 'か所 丸めたダカラ'); } else toast('丸められる角がなかったヨ（半径が大きすぎるかも）'); });
+      box.append(r3);
       return;
     }
     const L = curLoop(); if (!L) return;
     if (s.kind === 'circle') {
       head.textContent = '円' + lock; box.append(head);
       const r = kv();
-      numField(r, '中心X', L.circle.c[0], v => change(() => L.circle.c[0] = v));
-      numField(r, 'Y', L.circle.c[1], v => change(() => L.circle.c[1] = v));
-      numField(r, '半径', L.circle.r, v => change(() => L.circle.r = Math.max(0.1, v)));
+      numX(r, '中心X', L.circle.c[0], v => change(() => L.circle.c[0] = v));
+      numY(r, 'Y', L.circle.c[1], v => change(() => L.circle.c[1] = v));
+      numU(r, '半径', L.circle.r, v => change(() => L.circle.r = Math.max(0.1, v)));
       box.append(r);
       const r2 = kv(); btn(r2, '点と線の形にする', () => change(() => { circleToNodes(L); D.sel = { li: s.li, kind: 'layer' }; })); box.append(r2);
       return;
@@ -1731,13 +1854,17 @@ const Draw = (() => {
       const nd = L.nodes[s.i];
       head.textContent = `点 ${s.i + 1} / ${n}` + lock; box.append(head);
       const r = kv();
-      numField(r, 'X', nd.x, v => change(() => moveNode(L, s.i, v - nd.x, 0)));
-      numField(r, 'Y', nd.y, v => change(() => moveNode(L, s.i, 0, v - nd.y)));
+      numX(r, 'X', nd.x, v => change(() => moveNode(L, s.i, v - nd.x, 0)));
+      numY(r, 'Y', nd.y, v => change(() => moveNode(L, s.i, 0, v - nd.y)));
       box.append(r);
       const r2 = kv();
       btn(r2, nd.smooth ? 'なめらか → 角にする' : '角 → なめらかにする', () => change(() => toggleSmooth(L, s.i)));
       btn(r2, 'この点を消す', () => { if (n <= 3) return toast('点が3つより少なくなるダカラ消せない'); change(() => { deleteNode(L, s.i); D.sel = { li: s.li, kind: 'layer' }; }); });
       box.append(r2);
+      const r3 = kv(); r3.append('この角を丸める');
+      numU(r3, '半径', D.filletR, v => D.filletR = Math.max(0.01, v));
+      btn(r3, '丸める', () => { if (ly.lock) return; const prev = snapshotBefore(); if (fillet(L, s.i, D.filletR)) { D.sel = { li: s.li, kind: 'layer' }; pushState(prev); renderAll(); } else toast('丸められないダカラ（半径が大きすぎるか、角じゃない）'); });
+      box.append(r3);
       return;
     }
     if (s.kind === 'seg') {
@@ -1747,9 +1874,9 @@ const Draw = (() => {
       if (sg.type === 'A') {
         const r = kv();
         const set = (cx, cy, rr) => change(() => setArc(L, s.i, [cx, cy], rr));
-        numField(r, '中心X', sg.c[0], v => set(v, sg.c[1], sg.r));
-        numField(r, 'Y', sg.c[1], v => set(sg.c[0], v, sg.r));
-        numField(r, '半径', sg.r, v => set(sg.c[0], sg.c[1], Math.max(0.1, v)));
+        numX(r, '中心X', sg.c[0], v => set(v, sg.c[1], sg.r));
+        numY(r, 'Y', sg.c[1], v => set(sg.c[0], v, sg.r));
+        numU(r, '半径', sg.r, v => set(sg.c[0], sg.c[1], Math.max(0.1, v)));
         box.append(r);
         const nt = document.createElement('div'); nt.className = 'note'; nt.textContent = '中心・半径を変えると、両はしの点が新しい円の上に動くダカラ'; box.append(nt);
       }
@@ -1874,17 +2001,277 @@ const Draw = (() => {
   }
 
   // ---------- 部品 ----------
-  function addLayer(name, loops, op = 'add') {
-    change(() => { D.doc.layers.push({ id: uid(), name, op, vis: true, lock: false, loops }); D.sel = { li: D.doc.layers.length - 1, kind: 'layer' }; });
+  function addLayer(name, loops, op) {
+    change(() => { D.doc.layers.push({ id: uid(), name, op: op || $('newOp').value, vis: true, lock: false, loops }); D.sel = { li: D.doc.layers.length - 1, kind: 'layer' }; D.msel.clear(); });
   }
-  const C0 = SIZE / 2;
-  $('addCircle').onclick = () => addLayer('円', [{ circle: { c: [C0, C0], r: 200 } }]);
-  $('addRect').onclick = () => addLayer('四角', [{ nodes: [[C0 - 200, C0 - 200], [C0 + 200, C0 - 200], [C0 + 200, C0 + 200], [C0 - 200, C0 + 200]].map(p => ({ x: p[0], y: p[1], smooth: false })), segs: [0, 1, 2, 3].map(() => ({ type: 'L' })) }]);
-  $('addPoly').onclick = () => {
-    const k = Math.max(3, Math.min(24, Math.round(+$('polyN').value || 6)));
-    const nodes = []; for (let j = 0; j < k; j++) { const a = -Math.PI / 2 + j * TAU / k; nodes.push({ x: C0 + 220 * Math.cos(a), y: C0 + 220 * Math.sin(a), smooth: false }); }
-    addLayer(k + '角形', [{ nodes, segs: nodes.map(() => ({ type: 'L' })) }]);
+  // 部品の数字（中の座標で持つ。角度は見せる角度のまま）
+  const PS = { cx: SIZE / 2, cy: SIZE / 2, r: 200, r2: 150, w: 400, h: 200, ang: 0, n: 6, x1: 300, y1: 500, x2: 700, y2: 500, r1: 100, t: 40, cap: 'butt', bmode: 'ang', pts: '' };
+  const PF = {
+    circle: [['cx', '中心X', 'x'], ['cy', 'Y', 'y'], ['r', '半径', 'len']],
+    ring: [['cx', '中心X', 'x'], ['cy', 'Y', 'y'], ['r', '外の半径', 'len'], ['r2', '内の半径', 'len']],
+    rect: [['cx', '中心X', 'x'], ['cy', 'Y', 'y'], ['w', '幅', 'len'], ['h', '高さ', 'len'], ['ang', '角度°', 'ang']],
+    poly: [['cx', '中心X', 'x'], ['cy', 'Y', 'y'], ['r', '半径', 'len'], ['n', '角の数', 'int'], ['ang', '回す°', 'ang']],
+    barang: [['cx', '中心X', 'x'], ['cy', 'Y', 'y'], ['ang', '角度°', 'ang'], ['r1', '中心から', 'len'], ['r', 'まで', 'len'], ['t', '太さ', 'len']],
+    barpts: [['x1', '始点X', 'x'], ['y1', 'Y', 'y'], ['x2', '終点X', 'x'], ['y2', 'Y', 'y'], ['t', '太さ', 'len']]
   };
+  function renderParts() {
+    const box = $('partFields'); box.textContent = '';
+    const type = $('partType').value;
+    const NOTE = {
+      circle: '', ring: '輪は1枚で外と内の円を持つダカラ、重ねる順番を気にしなくていいヨ',
+      rect: '角度は' + (SY() < 0 ? '左回りがプラス' : '右回りがプラス'), poly: '最初の角は真上',
+      bar: '角度は右が0°、' + (SY() < 0 ? '左回りがプラス（真下は −90°）' : '右回りがプラス（真下は 90°）'),
+      pts: '1行に「X, Y」を1つずつ。上から順に線でつないで閉じるダカラ'
+    };
+    $('partNote').textContent = NOTE[type] || '';
+    if (type === 'bar') {
+      const r0 = kv(); r0.append('決め方 ');
+      const sm = document.createElement('select'); sm.style.width = 'auto';
+      sm.innerHTML = '<option value="ang">中心から角度で</option><option value="pts">2つの点で</option>'; sm.value = PS.bmode;
+      sm.onchange = () => { PS.bmode = sm.value; renderParts(); };
+      r0.append(sm, ' 端 ');
+      const cp = document.createElement('select'); cp.style.width = 'auto';
+      cp.innerHTML = '<option value="butt">四角</option><option value="round">丸</option>'; cp.value = PS.cap;
+      cp.onchange = () => PS.cap = cp.value;
+      r0.append(cp); box.append(r0);
+    }
+    if (type === 'pts') {
+      const r = kv(); const ta = document.createElement('textarea'); ta.id = 'partPts';
+      ta.placeholder = '-6, 14\n6, 14\n6, 16\n3, 16\n3, 18\n-3, 18\n-3, 16\n-6, 16';
+      ta.value = PS.pts; ta.oninput = () => PS.pts = ta.value; r.append(ta); box.append(r);
+      return;
+    }
+    const fields = type === 'bar' ? PF[PS.bmode === 'pts' ? 'barpts' : 'barang'] : PF[type];
+    let r = kv(), cnt = 0;
+    for (const [k, lab, kind] of fields) {
+      if (cnt && cnt % 3 === 0) { box.append(r); r = kv(); }
+      const v = PS[k];
+      const show = kind === 'x' ? dX(v) : kind === 'y' ? dY(v) : kind === 'len' ? toU(v) : v;
+      numField(r, lab, show, x => {
+        PS[k] = kind === 'x' ? iX(x) : kind === 'y' ? iY(x) : kind === 'len' ? Math.max(0, fromU(x)) : kind === 'int' ? Math.max(3, Math.min(48, Math.round(x))) : x;
+      }, true).dataset.k = k;
+      cnt++;
+    }
+    box.append(r);
+  }
+  $('partType').onchange = renderParts;
+  const rad = d => d * Math.PI / 180;
+  const linesLoop = pts => ({ nodes: pts.map(p => ({ x: p[0], y: p[1], smooth: false })), segs: pts.map(() => ({ type: 'L' })) });
+  function barLoop(p1, p2, t, cap) {
+    const dx = p2[0] - p1[0], dy = p2[1] - p1[1], L = Math.hypot(dx, dy); if (L < 1e-6 || t <= 0) return null;
+    const ux = dx / L, uy = dy / L, nx = -uy * t / 2, ny = ux * t / 2;
+    const a = [p1[0] + nx, p1[1] + ny], b = [p2[0] + nx, p2[1] + ny], c = [p2[0] - nx, p2[1] - ny], d = [p1[0] - nx, p1[1] - ny];
+    if (cap !== 'round') return linesLoop([a, b, c, d]);
+    const e2 = arc3(b, [p2[0] + ux * t / 2, p2[1] + uy * t / 2], c), e1 = arc3(d, [p1[0] - ux * t / 2, p1[1] - uy * t / 2], a);
+    return { nodes: [a, b, c, d].map(p => ({ x: p[0], y: p[1], smooth: false })), segs: [{ type: 'L' }, e2, { type: 'L' }, e1] };
+  }
+  $('partAdd').onclick = () => {
+    const type = $('partType').value, P = PS, c = [P.cx, P.cy];
+    if (type === 'circle') { if (!(P.r > 0)) return toast('半径を入れてネ'); return addLayer('円', [{ circle: { c, r: P.r } }]); }
+    if (type === 'ring') {
+      const ro = Math.max(P.r, P.r2), ri = Math.min(P.r, P.r2);
+      if (!(ri > 0) || ro - ri < 1e-6) return toast('外と内の半径を入れてネ');
+      return addLayer('輪', [{ circle: { c: c.slice(), r: ro } }, { circle: { c: c.slice(), r: ri } }]);
+    }
+    if (type === 'rect') {
+      if (!(P.w > 0 && P.h > 0)) return toast('幅と高さを入れてネ');
+      const a = rad(dA(P.ang)), ca = Math.cos(a), sa = Math.sin(a);
+      const pts = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([u, v]) => { const x = u * P.w / 2, y = v * P.h / 2; return [c[0] + ca * x - sa * y, c[1] + sa * x + ca * y]; });
+      return addLayer('四角', [linesLoop(pts)]);
+    }
+    if (type === 'poly') {
+      const pts = []; for (let j = 0; j < P.n; j++) { const a = rad(-90 + dA(P.ang) + j * 360 / P.n); pts.push([c[0] + P.r * Math.cos(a), c[1] + P.r * Math.sin(a)]); }
+      return addLayer(P.n + '角形', [linesLoop(pts)]);
+    }
+    if (type === 'bar') {
+      let p1, p2;
+      if (P.bmode === 'pts') { p1 = [P.x1, P.y1]; p2 = [P.x2, P.y2]; }
+      else { const a = rad(dA(P.ang)); p1 = [c[0] + P.r1 * Math.cos(a), c[1] + P.r1 * Math.sin(a)]; p2 = [c[0] + P.r * Math.cos(a), c[1] + P.r * Math.sin(a)]; }
+      const L = barLoop(p1, p2, P.t, P.cap); if (!L) return toast('長さと太さを入れてネ');
+      return addLayer('太線', [L]);
+    }
+    if (type === 'pts') {
+      const nums = (PS.pts.match(/-?\d+(?:\.\d+)?/g) || []).map(Number);
+      if (nums.length < 6 || nums.length % 2) return toast('「X, Y」を3つ以上入れてネ');
+      const pts = []; for (let j = 0; j < nums.length; j += 2) pts.push([iX(nums[j]), iY(nums[j + 1])]);
+      return addLayer('点の形', [linesLoop(pts)]);
+    }
+  };
+
+  // ---------- 回す・裏返す・コピー（何枚もいっしょ） ----------
+  D.msel = new Set(); D.filletR = 20; D.xc = null; D.xang = 90; D.xn = 4;
+  function targets() {
+    const ids = new Set(D.msel); const cur = curLayer(); if (cur) ids.add(cur.id);
+    return D.doc.layers.map((ly, i) => ({ ly, i })).filter(o => ids.has(o.ly.id));
+  }
+  function xCenter() { return D.xc || [SIZE / 2, SIZE / 2]; }
+  function applyT(ly, f, refl) {
+    for (const L of ly.loops) {
+      if (L.circle) { L.circle.c = f(L.circle.c); continue; }
+      L.nodes.forEach(n => { const q = f([n.x, n.y]); n.x = q[0]; n.y = q[1]; });
+      for (const s of L.segs) {
+        if (s.type === 'A') { s.c = f(s.c); if (refl) s.sweep = 1 - s.sweep; }
+        if (s.type === 'B') { s.c1 = f(s.c1); s.c2 = f(s.c2); }
+      }
+    }
+  }
+  const rotF = (c, a) => p => { const x = p[0] - c[0], y = p[1] - c[1], ca = Math.cos(a), sa = Math.sin(a); return [c[0] + ca * x - sa * y, c[1] + sa * x + ca * y]; };
+  const flipH = c => p => [2 * c[0] - p[0], p[1]], flipV = c => p => [p[0], 2 * c[1] - p[1]];
+  function xformDo(kind) {
+    const T = targets(); if (!T.length) return toast('レイヤーを選んでネ');
+    if (T.some(o => o.ly.lock)) return toast('ロック中のレイヤーがあるダカラ');
+    const c = xCenter();
+    change(() => {
+      const L = D.doc.layers, last = Math.max(...T.map(o => o.i));
+      if (kind === 'rot') T.forEach(o => applyT(o.ly, rotF(c, rad(dA(D.xang))), false));
+      if (kind === 'fh') T.forEach(o => applyT(o.ly, flipH(c), true));
+      if (kind === 'fv') T.forEach(o => applyT(o.ly, flipV(c), true));
+      let copies = [];
+      if (kind === 'mh' || kind === 'mv') copies = T.map(o => { const cp = clone(o.ly); cp.id = uid(); cp.name = o.ly.name + (kind === 'mh' ? '（左右）' : '（上下）'); applyT(cp, kind === 'mh' ? flipH(c) : flipV(c), true); return cp; });
+      if (kind === 'rc') for (let k = 1; k < D.xn; k++) for (const o of T) { const cp = clone(o.ly); cp.id = uid(); cp.name = o.ly.name + ' ' + (k + 1); applyT(cp, rotF(c, k * 2 * Math.PI / D.xn), false); copies.push(cp); }
+      if (copies.length) { L.splice(last + 1, 0, ...copies); D.msel = new Set(copies.map(cp => cp.id)); D.sel = { li: last + copies.length, kind: 'layer' }; }
+    });
+  }
+  // 合体：選んだレイヤーを順番どおりに足し引きして、1枚の形にする（円弧っぽいところは円弧に戻す）
+  function mergeSel() {
+    const T = targets(); if (T.length < 2) return toast('2枚以上選んでネ（Shift＋クリック）');
+    if (!paperReady()) return toast('合成の部品が読めなかったダカラ');
+    let res = null;
+    for (const { ly } of T) {
+      const cp = new pp.CompoundPath({ pathData: layerD(ly), insert: false }); cp.fillRule = 'evenodd';
+      if (ly.op === 'add') res = res ? res.unite(cp, { insert: false }) : cp;
+      else if (res) res = res.subtract(cp, { insert: false });
+    }
+    if (!res || Math.abs(res.area) < 1e-6) return toast('合体したら何も残らなかったダカラ');
+    const loops = pathToLoops(res);
+    change(() => {
+      const L = D.doc.layers, first = Math.min(...T.map(o => o.i)), ids = new Set(T.map(o => o.ly.id));
+      const nl = { id: uid(), name: '合体', op: 'add', vis: true, lock: false, loops };
+      D.doc.layers = L.filter(ly => !ids.has(ly.id)); D.doc.layers.splice(first, 0, nl);
+      D.msel.clear(); D.sel = { li: first, kind: 'layer' };
+    });
+    toast(T.length + '枚を合体したダカラ');
+  }
+  function pathToLoops(item) {
+    const paths = item.children ? item.children : [item], out = [];
+    for (const pth of paths) {
+      const S = pth.segments, n = S.length; if (n < 2) continue;
+      const P = S.map(s => [s.point.x, s.point.y]);
+      const nodes = S.map(s => ({ x: s.point.x, y: s.point.y, smooth: !s.handleIn.isZero() && !s.handleOut.isZero() && Math.abs(s.handleIn.normalize().dot(s.handleOut.normalize()) + 1) < 1e-3 }));
+      const segs = [];
+      for (let i = 0; i < n; i++) {
+        const a = S[i], b = S[(i + 1) % n];
+        if (a.handleOut.isZero() && b.handleIn.isZero()) { segs.push({ type: 'L' }); continue; }
+        const p0 = P[i], p3 = P[(i + 1) % n], c1 = [p0[0] + a.handleOut.x, p0[1] + a.handleOut.y], c2 = [p3[0] + b.handleIn.x, p3[1] + b.handleIn.y];
+        const arc = arc3(p0, bez(p0, c1, c2, p3, 0.5), p3);
+        let ok = arc && arc.r < 1e5;
+        if (ok) for (const t of [0.15, 0.3, 0.7, 0.85]) { const q = bez(p0, c1, c2, p3, t); if (Math.abs(Math.hypot(q[0] - arc.c[0], q[1] - arc.c[1]) - arc.r) > Math.max(0.02, arc.r * 2e-4)) { ok = false; break; } }
+        segs.push(ok ? arc : { type: 'B', c1, c2 });
+      }
+      out.push({ nodes, segs });
+    }
+    // 輪が全部同じ中心の円弧なら円にまとめる
+    return out.map(L => {
+      if (L.segs.every(s => s.type === 'A') && L.segs.every(s => Math.hypot(s.c[0] - L.segs[0].c[0], s.c[1] - L.segs[0].c[1]) < 1e-3 && Math.abs(s.r - L.segs[0].r) < 1e-3)) {
+        const t = L.segs.reduce((acc, s, i) => acc + arcLarge(np(L.nodes[i]), np(L.nodes[(i + 1) % L.nodes.length]), s).d, 0);
+        if (Math.abs(t - TAU) < 1e-3) return { circle: { c: L.segs[0].c.slice(), r: L.segs[0].r } };
+      }
+      return L;
+    });
+  }
+  function boundsCenter(T) {
+    const bs = T.map(o => loopsBounds(o.ly.loops));
+    const x0 = Math.min(...bs.map(b => b.x)), y0 = Math.min(...bs.map(b => b.y)), x1 = Math.max(...bs.map(b => b.x + b.w)), y1 = Math.max(...bs.map(b => b.y + b.h));
+    return [(x0 + x1) / 2, (y0 + y1) / 2];
+  }
+  function renderXform() {
+    const box = $('xform'); const T = targets();
+    for (const id of [...D.msel]) if (!D.doc.layers.some(l => l.id === id)) D.msel.delete(id);
+    if (!T.length) { box.className = 'note'; box.textContent = 'レイヤーを選んでネ。Shift（かCtrl）を押しながらクリックで何枚もいっしょに選べる'; return; }
+    box.className = ''; box.textContent = '';
+    const hd = document.createElement('div'); hd.className = 'note'; hd.textContent = `対象：${T.map(o => o.ly.name).join('、')}（${T.length}枚）`; box.append(hd);
+    const c = xCenter();
+    const r1 = kv(); r1.append('中心');
+    numX(r1, 'X', c[0], v => { D.xc = [v, xCenter()[1]]; renderXform(); });
+    numY(r1, 'Y', c[1], v => { D.xc = [xCenter()[0], v]; renderXform(); });
+    btn(r1, 'まん中', () => { D.xc = null; renderXform(); });
+    btn(r1, '形の中心', () => { D.xc = boundsCenter(T); renderXform(); });
+    box.append(r1);
+    const r2 = kv();
+    numField(r2, '角度°', D.xang, v => D.xang = v);
+    btn(r2, '回す', () => xformDo('rot'));
+    box.append(r2);
+    const r3 = kv();
+    btn(r3, '左右に裏返す', () => xformDo('fh')); btn(r3, '上下に裏返す', () => xformDo('fv'));
+    box.append(r3);
+    const r4 = kv();
+    btn(r4, '左右に鏡コピー', () => xformDo('mh')); btn(r4, '上下に鏡コピー', () => xformDo('mv'));
+    box.append(r4);
+    const r5 = kv();
+    numField(r5, '回転コピー', D.xn, v => D.xn = Math.max(2, Math.min(36, Math.round(v))));
+    r5.append('つ'); btn(r5, 'コピー', () => xformDo('rc'));
+    btn(r5, '合体（1つの形に）', mergeSel);
+    box.append(r5);
+    const nt = document.createElement('div'); nt.className = 'note';
+    nt.textContent = `回転コピーは中心のまわりに ${f2(360 / D.xn)}° ずつ。角度は${SY() < 0 ? '左回り' : '右回り'}がプラス`;
+    box.append(nt);
+  }
+
+  // ---------- 角を丸める ----------
+  const nrm = v => { const l = Math.hypot(v[0], v[1]); return l < 1e-12 ? null : [v[0] / l, v[1] / l]; };
+  function tanEnd(a, b, s) {   // 区間の終わりでの進む向き
+    if (s.type === 'L') return nrm(sub(b, a));
+    if (s.type === 'A') { const v = sub(b, s.c); return nrm(s.sweep ? [-v[1], v[0]] : [v[1], -v[0]]); }
+    return nrm(sub(b, s.c2)) || nrm(sub(b, s.c1));
+  }
+  function tanStart(a, b, s) { // 区間の始まりでの進む向き
+    if (s.type === 'L') return nrm(sub(b, a));
+    if (s.type === 'A') { const v = sub(a, s.c); return nrm(s.sweep ? [-v[1], v[0]] : [v[1], -v[0]]); }
+    return nrm(sub(s.c1, a)) || nrm(sub(s.c2, a));
+  }
+  function splitBez(a, c1, c2, b, t) {
+    const l = (p, q) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
+    const p01 = l(a, c1), p12 = l(c1, c2), p23 = l(c2, b), q0 = l(p01, p12), q1 = l(p12, p23), m = l(q0, q1);
+    return { left: { c1: p01, c2: q0 }, m, right: { c1: q1, c2: p23 } };
+  }
+  function bezT(a, c1, c2, b, d, fromEnd) { // 端から長さ d の所の t
+    const N = 200; let acc = 0, prev = fromEnd ? b : a;
+    for (let k = 1; k <= N; k++) {
+      const t = fromEnd ? 1 - k / N : k / N, q = bez(a, c1, c2, b, t), sl = Math.hypot(q[0] - prev[0], q[1] - prev[1]);
+      if (acc + sl >= d) { const f = (d - acc) / sl, tp = fromEnd ? 1 - (k - 1) / N : (k - 1) / N; return tp + (t - tp) * f; }
+      acc += sl; prev = q;
+    }
+    return null;
+  }
+  function trimSeg(a, b, s, d, fromEnd) {  // 端から d だけ短くした点と、新しい区間
+    if (s.type === 'L') { const L = Math.hypot(b[0] - a[0], b[1] - a[1]); if (d >= L * 0.98) return null; const u = nrm(sub(b, a)); return { p: fromEnd ? [b[0] - u[0] * d, b[1] - u[1] * d] : [a[0] + u[0] * d, a[1] + u[1] * d], seg: { type: 'L' } }; }
+    if (s.type === 'A') {
+      const { d: ang } = arcLarge(a, b, s); if (d >= ang * s.r * 0.98) return null;
+      const sg = s.sweep ? 1 : -1, base = fromEnd ? b : a, th = Math.atan2(base[1] - s.c[1], base[0] - s.c[0]) + (fromEnd ? -1 : 1) * sg * d / s.r;
+      return { p: [s.c[0] + s.r * Math.cos(th), s.c[1] + s.r * Math.sin(th)], seg: clone(s) };
+    }
+    const t = bezT(a, s.c1, s.c2, b, d, fromEnd); if (t == null || t <= 0.01 || t >= 0.99) return null;
+    const sp = splitBez(a, s.c1, s.c2, b, t);
+    return { p: sp.m, seg: Object.assign({ type: 'B' }, fromEnd ? sp.left : sp.right) };
+  }
+  function fillet(L, i, r) {
+    if (L.circle || !(r > 0)) return false;
+    const n = L.nodes.length, pi = (i - 1 + n) % n, ni = (i + 1) % n;
+    const A = np(L.nodes[pi]), B = np(L.nodes[i]), C = np(L.nodes[ni]), sp = L.segs[pi], sn = L.segs[i];
+    const t1 = tanEnd(A, B, sp), t2 = tanStart(B, C, sn); if (!t1 || !t2) return false;
+    const phi = Math.atan2(t1[0] * t2[1] - t1[1] * t2[0], t1[0] * t2[0] + t1[1] * t2[1]);
+    if (Math.abs(phi) < 0.01 || Math.abs(phi) > Math.PI - 0.01) return false;
+    const d = r * Math.tan(Math.abs(phi) / 2);
+    const P = trimSeg(A, B, sp, d, true), N = trimSeg(B, C, sn, d, false); if (!P || !N) return false;
+    const p1 = P.p, p2 = N.p, ch = sub(p2, p1), nn = [-t1[1], t1[0]], den = 2 * (ch[0] * nn[0] + ch[1] * nn[1]);
+    if (Math.abs(den) < 1e-9) return false;
+    const sc = (ch[0] * ch[0] + ch[1] * ch[1]) / den, cc = [p1[0] + nn[0] * sc, p1[1] + nn[1] * sc];
+    const arc = { type: 'A', c: cc, r: Math.abs(sc), sweep: (t1[0] * ch[1] - t1[1] * ch[0]) > 0 ? 1 : 0 };
+    L.nodes.splice(i, 1, { x: p1[0], y: p1[1], smooth: true }, { x: p2[0], y: p2[1], smooth: true });
+    L.segs.splice(i, 1, arc, N.seg);
+    L.segs[i === 0 ? L.segs.length - 1 : i - 1] = P.seg;
+    return true;
+  }
 
   // ---------- マウス ----------
   function toDoc(e) { const r = dv.getBoundingClientRect(); return [D.vb.x + (e.clientX - r.left) / r.width * D.vb.w, D.vb.y + (e.clientY - r.top) / r.height * D.vb.h]; }
@@ -1897,9 +2284,11 @@ const Draw = (() => {
   dv.addEventListener('dblclick', e => { if (!e.target.dataset.h) fit(); });
 
   dv.addEventListener('mousedown', e => {
-    if (!D.vb || e.button !== 0) return;
+    if (!D.vb || (e.button !== 0 && e.button !== 1)) return;
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
     const t = e.target, ds = t.dataset, p0 = toDoc(e);
     const base = { x: e.clientX, y: e.clientY, moved: false, alt: e.altKey, p0, prev: snapshotBefore() };
+    if (D.space || e.button === 1) { e.preventDefault(); D.drag = Object.assign(base, { mode: 'pan', vb: Object.assign({}, D.vb), target: dv, nosel: true }); return; }
     if (ds.h && D.sel) {
       const li = D.sel.li, ly = D.doc.layers[li], lp = +ds.loop, L = ly.loops[lp];
       const d = Object.assign(base, { mode: 'handle', h: ds.h, li, loop: lp, i: +ds.i });
@@ -1912,13 +2301,89 @@ const Draw = (() => {
       } else if (ds.h === 'cc' || ds.h === 'cr') D.sel = { li, kind: 'circle', loop: lp };
       D.drag = d; renderCanvas(); renderInspector(); return;
     }
+    if (ds.seg != null) {
+      const li = +ds.li, lp = +ds.loop, i = +ds.seg, ly = D.doc.layers[li];
+      if (!ly.lock) {
+        const L = ly.loops[lp], n = L.nodes.length;
+        // 両はしの点のとなりが円弧なら、そのまん中を覚えておく（形がくずれないように）
+        const midOf = k => L.segs[k].type === 'A' ? arcMid(np(L.nodes[k]), np(L.nodes[(k + 1) % n]), L.segs[k]) : null;
+        D.drag = Object.assign(base, { mode: 'seg', li, loop: lp, i, target: t,
+          mids: [[midOf((i - 1 + n) % n), null], [null, midOf((i + 1) % n)]] });
+        return;
+      }
+    }
     if (ds.g != null) {
       const gi = +ds.g;
       D.drag = Object.assign(base, { mode: 'guide', gi, gk: ds.gk, g0: clone(D.doc.guides[gi]) });
       return;
     }
+    if (ds.layer != null || ds.circle != null) {
+      const li = ds.layer != null ? +ds.layer : +ds.li;
+      D.drag = Object.assign(base, { mode: 'pick', li, target: t, shift: e.shiftKey || e.ctrlKey || e.metaKey });
+      return;
+    }
+    if (e.shiftKey) { D.drag = Object.assign(base, { mode: 'band', target: t }); return; }
     D.drag = Object.assign(base, { mode: 'pan', vb: Object.assign({}, D.vb), target: t });
   });
+  // Shift＋クリックで足したり外したり
+  function toggleSel(li) {
+    const ly = D.doc.layers[li];
+    if (!D.sel) { select({ li, kind: 'layer' }); return; }
+    if (D.sel.li === li) {
+      const ids = [...D.msel];
+      if (!ids.length) D.sel = null;
+      else { D.msel.delete(ids[0]); D.sel = { li: D.doc.layers.findIndex(l => l.id === ids[0]), kind: 'layer' }; }
+    } else {
+      if (D.sel.kind !== 'layer') D.sel = { li: D.sel.li, kind: 'layer' };
+      D.msel.has(ly.id) ? D.msel.delete(ly.id) : D.msel.add(ly.id);
+    }
+    renderCanvas(); renderLayers(); renderXform(); renderInspector();
+  }
+  // 選んだレイヤーをまとめて動かす（どれかの点が方眼・ガイド・ほかの点に吸いつく）
+  function dragLayers(d, e) {
+    const m = toDoc(e), before = JSON.parse(d.prev).layers;
+    let dx = m[0] - d.p0[0], dy = m[1] - d.p0[1];
+    const T = d.ids.map(id => D.doc.layers.findIndex(l => l.id === id)).filter(i => i >= 0);
+    D.snapMk = null;
+    if (!d.alt) {
+      const thr = 10 * px(), skip = new Set(T);
+      const own = [];
+      for (const i of T) for (const L of before[i].loops) { if (L.circle) own.push(L.circle.c); else L.nodes.forEach(n => own.push([n.x, n.y])); if (own.length > 400) break; }
+      const tgt = [];
+      if ($('snapOn').checked) tgt.push(...D.ipts);
+      if ($('snapNodes').checked) D.doc.layers.forEach((ly, li) => { if (!ly.vis || skip.has(li)) return; ly.loops.forEach(L => { if (L.circle) tgt.push(L.circle.c); else L.nodes.forEach(n => tgt.push([n.x, n.y])); }); });
+      const grid = $('snapOn').checked ? D.geoms.find(g => g.k === 'grid') : null;
+      let best = null, bd = thr;
+      for (const o of own) {
+        const q = [o[0] + dx, o[1] + dy];
+        for (const t of tgt) { const dd = Math.hypot(t[0] - q[0], t[1] - q[1]); if (dd < bd) { bd = dd; best = [t[0] - q[0], t[1] - q[1], t]; } }
+      }
+      if (best) { dx += best[0]; dy += best[1]; D.snapMk = best[2]; }
+      else if (grid) {
+        // 方眼は横と縦を別々に：どれかの点のXが方眼の線に近ければX、Yが近ければYをそろえる
+        let cx = null, bx = thr, cy = null, by = thr, mk = null;
+        for (const o of own) {
+          const qx = o[0] + dx, qy = o[1] + dy;
+          const gx = grid.ox + Math.round((qx - grid.ox) / grid.s) * grid.s, gy = grid.oy + Math.round((qy - grid.oy) / grid.s) * grid.s;
+          if (Math.abs(gx - qx) < bx) { bx = Math.abs(gx - qx); cx = gx - qx; }
+          if (Math.abs(gy - qy) < by) { by = Math.abs(gy - qy); cy = gy - qy; }
+        }
+        if (cx != null) dx += cx; if (cy != null) dy += cy;
+      }
+    }
+    for (const i of T) { D.doc.layers[i].loops = clone(before[i].loops); moveLayer(D.doc.layers[i], dx, dy); }
+  }
+  function bandSelect(a, b) {
+    const x0 = Math.min(a[0], b[0]), x1 = Math.max(a[0], b[0]), y0 = Math.min(a[1], b[1]), y1 = Math.max(a[1], b[1]);
+    const hit = [];
+    D.doc.layers.forEach((ly, li) => { if (!ly.vis || !ly.loops.length) return; const bb = loopsBounds(ly.loops); if (bb.x <= x1 && bb.x + bb.w >= x0 && bb.y <= y1 && bb.y + bb.h >= y0) hit.push(li); });
+    if (!hit.length) return;
+    if (!D.sel) D.sel = { li: hit[0], kind: 'layer' };
+    else if (D.sel.kind !== 'layer') D.sel = { li: D.sel.li, kind: 'layer' };
+    for (const li of hit) if (li !== D.sel.li) D.msel.add(D.doc.layers[li].id);
+    renderCanvas(); renderLayers(); renderXform(); renderInspector();
+    toast(hit.length + '枚えらんだダカラ');
+  }
   // ガイドを動かすとき吸いつく先：ほかのガイドの交点・中心、図形の点、用紙のまん中と角
   function guideTargets(gi) {
     guideGeoms(gi);
@@ -1927,9 +2392,12 @@ const Draw = (() => {
     D.doc.layers.forEach(ly => { if (ly.vis) ly.loops.forEach(L => { if (L.circle) pts.push(L.circle.c); else L.nodes.forEach(n => pts.push([n.x, n.y])); }); });
     return pts;
   }
+  // 方眼（自分以外で表示中のもの）
+  function grids(gi) { return D.doc.guides.filter((g, i) => i !== gi && g.vis && g.type === 'grid').map(g => ({ s: Math.max(1, g.s), ox: g.x, oy: g.y })); }
+  const gridRound = (v, o, s) => o + Math.round((v - o) / s) * s;
   function dragGuide(d, e) {
     const g = D.doc.guides[d.gi], g0 = d.g0, m = toDoc(e), thr = 10 * px();
-    const free = d.alt;
+    const free = d.alt, GR = free ? [] : grids(d.gi);
     D.snapMk = null;
     if (d.gk === 'line') {
       const a = g0.ang * Math.PI / 180, nx = -Math.sin(a), ny = Math.cos(a);
@@ -1938,6 +2406,13 @@ const Draw = (() => {
         let bd = thr, bt = null, bp = null;
         for (const q of guideTargets(d.gi)) { const tq = (q[0] - g0.x) * nx + (q[1] - g0.y) * ny; if (Math.abs(tq - t) < bd) { bd = Math.abs(tq - t); bt = tq; bp = q; } }
         if (bt != null) { t = bt; D.snapMk = bp; }
+        else if (GR.length) {
+          // 方眼にカチッと：縦線はX、横線はYを方眼の線にそろえる。斜めは近い方眼の点を通るように
+          const G0 = GR[0], px0 = g0.x + nx * t, py0 = g0.y + ny * t;
+          if (Math.abs(ny) < 1e-9) t = (gridRound(px0, G0.ox, G0.s) - g0.x) / nx;
+          else if (Math.abs(nx) < 1e-9) t = (gridRound(py0, G0.oy, G0.s) - g0.y) / ny;
+          else { const c = [gridRound(px0, G0.ox, G0.s), gridRound(py0, G0.oy, G0.s)]; t = (c[0] - g0.x) * nx + (c[1] - g0.y) * ny; }
+        }
       }
       g.x = f2(g0.x + nx * t); g.y = f2(g0.y + ny * t);
     } else if (d.gk === 'ring') {
@@ -1946,6 +2421,7 @@ const Draw = (() => {
         let bd = thr, br = null, bp = null;
         for (const q of guideTargets(d.gi)) { const rq = Math.hypot(q[0] - g0.x, q[1] - g0.y); if (rq > 1 && Math.abs(rq - r) < bd) { bd = Math.abs(rq - r); br = rq; bp = q; } }
         if (br != null) { r = br; D.snapMk = bp; }
+        else if (GR.length) r = Math.max(GR[0].s, Math.round(r / GR[0].s) * GR[0].s);
       }
       g.r = f2(Math.max(0.5, r));
     } else if (d.gk === 'center') {
@@ -1954,9 +2430,64 @@ const Draw = (() => {
         let bd = thr, bp = null;
         for (const c of guideTargets(d.gi)) { const dd = Math.hypot(c[0] - q[0], c[1] - q[1]); if (dd < bd) { bd = dd; bp = c; } }
         if (bp) { q = bp.slice(); D.snapMk = bp; }
+        else if (GR.length) { q = [gridRound(q[0], GR[0].ox, GR[0].s), gridRound(q[1], GR[0].oy, GR[0].s)]; D.snapMk = q; }
       }
       g.x = f2(q[0]); g.y = f2(q[1]);
     }
+  }
+  function moveSeg(L, i, dx, dy) {
+    const n = L.nodes.length, j = (i + 1) % n, sg = clone(L.segs[i]);
+    const midOf = k => L.segs[k].type === 'A' ? arcMid(np(L.nodes[k]), np(L.nodes[(k + 1) % n]), L.segs[k]) : null;
+    const m0 = [midOf((i - 1 + n) % n), null], m1 = [null, midOf(j)];
+    moveNode(L, i, dx, dy, m0); moveNode(L, j, dx, dy, m1);
+    if (sg.type === 'A') { sg.c = [sg.c[0] + dx, sg.c[1] + dy]; L.segs[i] = sg; }
+    if (sg.type === 'B') { sg.c1 = [sg.c1[0] + dx, sg.c1[1] + dy]; sg.c2 = [sg.c2[0] + dx, sg.c2[1] + dy]; L.segs[i] = sg; }
+    if (sg.type === 'L') L.segs[i] = sg;
+  }
+  // 線（区間）をつかんで動かす：直線は線に直角の向きだけ（となりの縦横がくずれない）。曲線はそのまま平行に
+  function dragSeg(d, e) {
+    const before = JSON.parse(d.prev).layers[d.li].loops[d.loop];
+    D.doc.layers[d.li].loops[d.loop] = clone(before);
+    const L = D.doc.layers[d.li].loops[d.loop], n = L.nodes.length, i = d.i, j = (i + 1) % n;
+    const a = np(L.nodes[i]), b = np(L.nodes[j]), sg = clone(L.segs[i]), m = toDoc(e);
+    let dx = m[0] - d.p0[0], dy = m[1] - d.p0[1];
+    D.snapMk = null;
+    if (sg.type === 'L') {
+      const u = nrm(sub(b, a)); if (!u) return;
+      const nx = -u[1], ny = u[0];
+      let t = dx * nx + dy * ny;
+      if (!d.alt) {
+        const thr = 10 * px(); let bd = thr, bt = null, bp = null;
+        const cand = (q, tq) => { if (Math.abs(tq - t) < bd) { bd = Math.abs(tq - t); bt = tq; bp = q; } };
+        // ガイドの交点、ほかの点
+        if ($('snapOn').checked) D.ipts.forEach(q => cand(q, (q[0] - a[0]) * nx + (q[1] - a[1]) * ny));
+        if ($('snapNodes').checked) D.doc.layers.forEach((ly, li) => { if (ly.vis) ly.loops.forEach((LL, lp) => {
+          if (LL.circle) return;
+          LL.nodes.forEach((nd, k) => { if (li === d.li && lp === d.loop && (k === i || k === j)) return; cand([nd.x, nd.y], (nd.x - a[0]) * nx + (nd.y - a[1]) * ny); });
+        }); });
+        // 平行なガイド線
+        if ($('snapOn').checked) for (const G of D.geoms) if ((G.k === 'line' || G.k === 'ray') && Math.abs(G.d[0] * nx + G.d[1] * ny) < 1e-6) cand(G.p, (G.p[0] - a[0]) * nx + (G.p[1] - a[1]) * ny);
+        if (bt != null) { t = bt; D.snapMk = bp; }
+        else if ($('snapOn').checked) {
+          // 方眼にカチッと
+          const G = D.geoms.find(g => g.k === 'grid');
+          if (G) {
+            const px0 = a[0] + nx * t, py0 = a[1] + ny * t, gr = (v, o) => o + Math.round((v - o) / G.s) * G.s;
+            if (Math.abs(ny) < 1e-9) t = (gr(px0, G.ox) - a[0]) / nx;
+            else if (Math.abs(nx) < 1e-9) t = (gr(py0, G.oy) - a[1]) / ny;
+            else { const c = [gr(px0, G.ox), gr(py0, G.oy)]; if (Math.hypot(c[0] - px0, c[1] - py0) < thr * 2) t = (c[0] - a[0]) * nx + (c[1] - a[1]) * ny; }
+          }
+        }
+      }
+      dx = nx * t; dy = ny * t;
+    } else if (!d.alt) {
+      const q = snap([a[0] + dx, a[1] + dy], { li: d.li, loop: d.loop, i }); dx = q[0] - a[0]; dy = q[1] - a[1];
+    }
+    if (!dx && !dy) return;
+    moveNode(L, i, dx, dy, d.mids[0]);
+    moveNode(L, j, dx, dy, d.mids[1]);
+    if (sg.type === 'A') { sg.c = [sg.c[0] + dx, sg.c[1] + dy]; L.segs[i] = sg; }
+    if (sg.type === 'B') { sg.c1 = [sg.c1[0] + dx, sg.c1[1] + dy]; sg.c2 = [sg.c2[0] + dx, sg.c2[1] + dy]; L.segs[i] = sg; }
   }
   window.addEventListener('mousemove', e => {
     const d = D.drag; if (!d) return;
@@ -1970,6 +2501,25 @@ const Draw = (() => {
       return;
     }
     if (d.mode === 'guide') { dragGuide(d, e); renderCanvas(); return; }
+    if (d.mode === 'seg') { dragSeg(d, e); renderCanvas(); return; }
+    if (d.mode === 'band') {
+      const m = toDoc(e), g = $('dsnap'); g.textContent = '';
+      ns('rect', { x: Math.min(m[0], d.p0[0]), y: Math.min(m[1], d.p0[1]), width: Math.abs(m[0] - d.p0[0]), height: Math.abs(m[1] - d.p0[1]), class: 'band' }, g);
+      d.p1 = m; return;
+    }
+    if (d.mode === 'pick') {
+      if (!d.ids) {
+        // つかんだ形が選ばれてなかったら、それだけを選びなおす（Shiftなら足す）
+        const ly = D.doc.layers[d.li];
+        const inSel = (D.sel && D.sel.li === d.li) || D.msel.has(ly.id);
+        if (!inSel) { if (d.shift && D.sel) { if (D.sel.kind !== 'layer') D.sel = { li: D.sel.li, kind: 'layer' }; D.msel.add(ly.id); } else { D.msel.clear(); D.sel = { li: d.li, kind: 'layer' }; } }
+        else if (D.sel.kind !== 'layer') D.sel = { li: D.sel.li, kind: 'layer' };
+        const T = targets();
+        if (T.some(o => o.ly.lock)) { toast('ロック中のレイヤーがあるダカラ動かせない'); D.drag = null; renderAll(); return; }
+        d.ids = T.map(o => o.ly.id);
+      }
+      dragLayers(d, e); renderCanvas(); return;
+    }
     const L = D.doc.layers[d.li].loops[d.loop];
     if (d.h === 'node') {
       // ドラッグ開始時の形から計算しなおす（誤差がたまらないように）
@@ -1991,9 +2541,16 @@ const Draw = (() => {
   window.addEventListener('mouseup', () => {
     const d = D.drag; if (!d) return;
     D.drag = null; D.snapMk = null; dv.classList.remove('drag');
-    if (d.mode === 'handle' || d.mode === 'guide') { if (d.moved) pushState(d.prev); renderAll(); return; }
-    if (d.moved) { renderCanvas(); return; }
+    if (d.mode === 'handle' || d.mode === 'guide' || (d.mode === 'seg' && d.moved)) { if (d.moved) { pushState(d.prev); if (d.mode === 'seg') D.sel = { li: d.li, kind: 'seg', loop: d.loop, i: d.i }; } renderAll(); return; }
+    if (d.mode === 'pick' && d.moved) { if (d.ids) { pushState(d.prev); renderAll(); } return; }
+    if (d.mode === 'band') { $('dsnap').textContent = ''; if (d.moved && d.p1) bandSelect(d.p0, d.p1); return; }
+    if (d.moved || d.nosel) { renderCanvas(); return; }
     const ds = d.target.dataset || {};
+    if (d.mode === 'pick' && d.shift) { toggleSel(d.li); return; }
+    if (d.mode === 'pick' && ds.circle == null) {
+      // 何枚も選んでいるときに、その中の1枚をクリック → その1枚だけに
+      D.msel.clear(); select({ li: d.li, kind: 'layer' }); return;
+    }
     if (ds.layer != null) select({ li: +ds.layer, kind: 'layer' });
     else if (ds.seg != null) select({ li: +ds.li, kind: 'seg', loop: +ds.loop, i: +ds.seg });
     else if (ds.circle != null) select({ li: +ds.li, kind: 'circle', loop: +ds.loop });
@@ -2005,19 +2562,37 @@ const Draw = (() => {
     if (tag === 'input' || tag === 'select' || tag === 'textarea') return;
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); return; }
+    if (e.key === ' ') { e.preventDefault(); if (!D.space) { D.space = true; dv.classList.add('space'); } return; }
+    if ((e.key === 'g' || e.key === 'G') && !e.ctrlKey && !e.metaKey && !e.altKey) { $('gFront').checked = !$('gFront').checked; renderCanvas(); toast($('gFront').checked ? 'ガイドを上に出したダカラ' : 'ガイドを下にかくしたダカラ'); return; }
     const s = D.sel; if (!s) return;
     const ly = curLayer(); if (!ly || ly.lock) return;
-    const step = e.shiftKey ? 10 : 1;
+    const step = fromU(nudgeU()) * (e.shiftKey ? 10 : 1);
     const dirs = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
     const dd = dirs[e.key];
     if (dd) {
       e.preventDefault();
-      change(() => {
-        const dx = dd[0] * step, dy = dd[1] * step, L = curLoop();
-        if (s.kind === 'node') moveNode(L, s.i, dx, dy);
-        else if (s.kind === 'circle') { L.circle.c[0] += dx; L.circle.c[1] += dy; }
-        else if (s.kind === 'layer') moveLayer(ly, dx, dy);
-      });
+      let dx = dd[0] * step, dy = dd[1] * step;
+      const L = curLoop();
+      if (s.kind === 'seg' && L.segs[s.i].type === 'L') {
+        // 直線は線に直角の向きだけ（線にそった矢印は動かさない）
+        const a = np(L.nodes[s.i]), b = np(L.nodes[(s.i + 1) % L.nodes.length]), u = nrm(sub(b, a));
+        if (!u) return;
+        const t = dx * -u[1] + dy * u[0];
+        if (Math.abs(t) < step * 1e-6) return toast('この線は線の向きには動かないダカラ（直角の矢印で）');
+        dx = -u[1] * t; dy = u[0] * t;
+      }
+      // 続けて押したぶんは「戻す」1回にまとめる
+      const key = JSON.stringify([s.li, s.kind, s.loop, s.i]), now = Date.now();
+      const merge = D.nudgeKey === key && now - D.nudgeT < 900;
+      const prev = merge ? null : snapshotBefore();
+      if (s.kind === 'node') moveNode(L, s.i, dx, dy);
+      else if (s.kind === 'seg') moveSeg(L, s.i, dx, dy);
+      else if (s.kind === 'circle') { L.circle.c[0] += dx; L.circle.c[1] += dy; }
+      else if (s.kind === 'layer') { const T = targets(); if (T.some(o => o.ly.lock)) return toast('ロック中のレイヤーがあるダカラ'); T.forEach(o => moveLayer(o.ly, dx, dy)); }
+      if (prev) pushState(prev); else { D.dirty = true; showFile(); }
+      D.nudgeKey = key; D.nudgeT = now;
+      renderCanvas(); renderInspector();
+      return;
     }
     if ((e.key === 'Delete' || e.key === 'Backspace') && s.kind === 'node') {
       const L = curLoop(); if (L.nodes.length <= 3) return toast('点が3つより少なくなるダカラ消せない');
@@ -2025,10 +2600,18 @@ const Draw = (() => {
     }
   });
   window.addEventListener('resize', () => { if ($('dstage').style.display !== 'none' && D.vb) fit(); });
+  window.addEventListener('keyup', e => {
+    if (e.key !== ' ' || !D.space) return;
+    D.space = false; dv.classList.remove('space');
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (tag !== 'input' && tag !== 'textarea' && tag !== 'select') e.preventDefault();
+  });
+  window.addEventListener('blur', () => { D.space = false; dv.classList.remove('space'); });
+  ['gFront', 'gLock', 'gHide'].forEach(id => $(id).addEventListener('change', () => renderCanvas()));
 
   // ---------- ファイル ----------
   $('dUndo').onclick = undo; $('dRedo').onclick = redo;
-  $('dNew').onclick = () => { if (D.doc.layers.length && !confirm('今の内容を消して、新しく始める？')) return; change(() => { D.doc = { v: 1, size: SIZE, layers: [], guides: [], under: null }; D.sel = null; }); D.file = null; D.dirty = false; showFile(); };
+  $('dNew').onclick = () => { if (D.doc.layers.length && !confirm('今の内容を消して、新しく始める？')) return; change(() => { D.doc = { v: 1, size: SIZE, unit: unitStr(), paper: D.doc.paper, origin: D.doc.origin, yUp: D.doc.yUp, layers: [], guides: [], under: null }; D.sel = null; }); D.file = null; D.dirty = false; showFile(); };
   // 保存先のファイルを覚えて「保存」は上書き
   D.file = null; D.dirty = false;
   function baseName() { return D.file ? D.file.name.replace(/\.json$/i, '') : 'mon-project'; }
@@ -2048,7 +2631,7 @@ const Draw = (() => {
     catch (e) { if (e && e.name === 'AbortError') return; saveAs(); }
   }
   function loadText(txt, file) {
-    try { const doc = JSON.parse(txt); if (!doc.layers) throw 0; change(() => { D.doc = doc; D.sel = null; }); D.file = file; D.dirty = false; showFile(); toast('開いたダカラ'); }
+    try { const doc = JSON.parse(txt); if (!doc.layers) throw 0; if (!doc.unit) { doc.unit = 'px'; doc.paper = SIZE; } if (!doc.origin) { doc.origin = 'tl'; doc.yUp = false; } change(() => { D.doc = doc; D.sel = null; }); D.file = file; D.dirty = false; showFile(); toast('開いたダカラ'); }
     catch { toast('このファイルは読めないダカラ'); }
   }
   $('dSave').onclick = save;
@@ -2140,9 +2723,23 @@ const Draw = (() => {
     }
     return { simple, layer: vis[0], res };
   }
-  function exportData() {
+  function dpi() { return Math.max(36, Math.min(2400, +$('dDpi').value || 300)); }
+  // 書き出しの大きさ（kind=png ならピクセル、それ以外は用紙の単位）
+  function outScale(kind) { return kind === 'png' && unitStr() === 'mm' ? U() * dpi() / 25.4 : U(); }
+  function renderSizeInfo() {
+    const ls = D.doc.layers.filter(l => l.vis && l.op === 'add' && l.loops.length);
+    if (!ls.length) { $('dSizeInfo').textContent = ''; return; }
+    let b = { x: 0, y: 0, w: SIZE, h: SIZE };
+    if ($('dCrop').checked) { const bs = ls.map(l => loopsBounds(l.loops)); const x0 = Math.min(...bs.map(q => q.x)), y0 = Math.min(...bs.map(q => q.y)), x1 = Math.max(...bs.map(q => q.x + q.w)), y1 = Math.max(...bs.map(q => q.y + q.h)); b = { x: x0, y: y0, w: x1 - x0, h: y1 - y0 }; }
+    const u = unitStr(), k = U();
+    let t = `書き出しの大きさ：${f2(b.w * k)} × ${f2(b.h * k)} ${u}`;
+    if (u === 'mm') { const kp = outScale('png'); t += `（PNGは ${Math.round(b.w * kp)} × ${Math.round(b.h * kp)} px）`; }
+    $('dSizeInfo').textContent = t;
+  }
+  $('dCrop').onchange = renderSizeInfo; $('dDpi').onchange = renderSizeInfo;
+  function exportData(kind) {
     const C = composite(); if (!C || (!C.simple && !C.res)) return null;
-    const mode = $('dMode').value, size = Math.max(50, +$('dSize').value || 1000), crop = $('dCrop').checked;
+    const mode = $('dMode').value, crop = $('dCrop').checked;
     let bounds;
     let pathsFn;
     if (C.res) {
@@ -2162,9 +2759,9 @@ const Draw = (() => {
       pathsFn = (k, tx, ty) => { const c = item.clone({ insert: false }); c.translate(new pp.Point(-tx, -ty)); c.scale(k, new pp.Point(0, 0)); return c.getPathData(null, 2); };
     }
     if (!crop) bounds = { x: 0, y: 0, w: SIZE, h: SIZE };
-    const k = size / Math.max(bounds.w, bounds.h, 1e-6);
-    const W = Math.max(1, Math.round(bounds.w * k)), H = Math.max(1, Math.round(bounds.h * k));
-    return { d: pathsFn(k, bounds.x, bounds.y), W, H, mode, keepsArcs: C.simple && mode !== 'outer', warn: C.warn };
+    const k = outScale(kind), png = kind === 'png';
+    const W = png ? Math.max(1, Math.round(bounds.w * k)) : f3(bounds.w * k), H = png ? Math.max(1, Math.round(bounds.h * k)) : f3(bounds.h * k);
+    return { d: pathsFn(k, bounds.x, bounds.y), W, H, unit: png ? 'px' : unitStr(), mode, keepsArcs: C.simple && mode !== 'outer', warn: C.warn };
   }
   function shift(L, tx, ty) { const c = clone(L); const tmp = { loops: [c] }; moveLayer(tmp, -tx, -ty); return c; }
   function loopsBounds(loops) {
@@ -2186,12 +2783,13 @@ const Draw = (() => {
     return [sg.c[0] + sg.r * Math.cos(am), sg.c[1] + sg.r * Math.sin(am)];
   }
   function svgOut(o) {
-    const sw = Math.max(1, Math.round(Math.max(o.W, o.H) / 400));
+    const sw = o.unit === 'mm' ? f3(Math.max(o.W, o.H) / 400) : Math.max(1, Math.round(Math.max(o.W, o.H) / 400));
     const attr = o.mode === 'line' ? `fill="none" stroke="#000" stroke-width="${sw}" stroke-linejoin="round"` : `fill="#000" fill-rule="evenodd"`;
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${o.W} ${o.H}" width="${o.W}" height="${o.H}">\n<path ${attr} d="${o.d}"/>\n</svg>\n`;
+    const u = o.unit === 'mm' ? 'mm' : '';
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${o.W} ${o.H}" width="${o.W}${u}" height="${o.H}${u}">\n<path ${attr} d="${o.d}"/>\n</svg>\n`;
   }
   function doExport(kind) {
-    const o = exportData(); if (!o) return toast('書き出す形がないダカラ');
+    const o = exportData(kind); if (!o) return toast('書き出す形がないダカラ');
     $('dExpNote').textContent = o.warn || (o.keepsArcs ? '円弧はそのまま円弧で書き出したヨ' : 'レイヤーを合成したので、円弧はベジェ曲線（ほぼ同じ形）になってるヨ');
     if (kind === 'svg') saveBlob(new Blob([svgOut(o)], { type: 'image/svg+xml' }), baseName() + '.svg', 'svg');
     if (kind === 'copy') navigator.clipboard.writeText(o.d).then(() => toast('パスをコピーしたダカラ'), () => toast('コピーできなかった…'));
