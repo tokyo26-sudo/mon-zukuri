@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>紋づくり v0.14</title>
+<title>紋づくり v0.15</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%238a2b1d'/><circle cx='32' cy='32' r='24.5' fill='none' stroke='%23fff' stroke-width='5'/><g fill='%23fff'><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%280 32 32%29'/><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%2890 32 32%29'/><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%28180 32 32%29'/><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%28270 32 32%29'/></g><circle cx='32' cy='32' r='3.4' fill='%238a2b1d'/></svg>">
 <style>
 :root{
@@ -33,9 +33,21 @@ header h1 small{font-weight:400;color:var(--sub);font-size:12px;margin-left:6px}
 .tab{border:1px solid var(--line);background:transparent;color:var(--ink);padding:6px 18px;border-radius:999px;cursor:pointer;font-size:14px}
 .tab.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 main{display:flex;height:calc(100% - 48px)}
-aside{width:300px;flex:none;overflow:auto;border-right:1px solid var(--line);background:var(--panel);padding:12px 14px 40px}
-aside h2{font-size:12px;color:var(--sub);font-weight:600;margin:18px 0 8px;letter-spacing:.1em}
-aside h2:first-child{margin-top:4px}
+aside{width:300px;flex:none;overflow:auto;border-right:1px solid var(--line);background:var(--canvas);padding:10px 10px 40px}
+.sec{border:1px solid var(--line);border-radius:12px;background:var(--panel);margin:0 0 10px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.sec>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:9px;padding:9px 12px;user-select:none}
+.sec>summary::-webkit-details-marker{display:none}
+.sec>summary .ic{font-size:19px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:color-mix(in srgb,var(--accent) 12%,var(--panel));flex:none}
+.sec>summary .tt{font-weight:700;font-size:14px;display:flex;flex-direction:column;line-height:1.25}
+.sec>summary .tt small{font-weight:400;font-size:11px;color:var(--sub)}
+.sec>summary::after{content:'▾';margin-left:auto;color:var(--sub);font-size:13px;transition:transform .15s}
+.sec:not([open])>summary::after{transform:rotate(-90deg)}
+.sec>summary:hover{background:color-mix(in srgb,var(--accent) 5%,var(--panel))}
+.sec[open]>summary{border-bottom:1px solid var(--line)}
+.sec>.body{padding:8px 12px 10px}
+.secbar{display:flex;gap:6px;justify-content:flex-end;margin:0 0 8px}
+.secbar button{border:none;background:transparent;color:var(--sub);font-size:12px;cursor:pointer;padding:2px 4px}
+.secbar button:hover{color:var(--accent)}
 .row{margin:8px 0}
 .row label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px}
 .row label span.v{color:var(--sub);font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:3px}
@@ -110,7 +122,7 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
 .kv .num{width:76px}
 .kv textarea{width:100%;min-height:70px;font:13px ui-monospace,monospace;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);padding:5px}
 .li.on2{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--bg))}
-#drawSide{width:350px}
+#drawSide{width:360px}
 #drawSide .li .num{width:66px}
 .toast{position:fixed;right:16px;bottom:16px;background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.show{opacity:1}
@@ -119,7 +131,7 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
 </head>
 <body>
 <header>
-  <h1>紋づくり<small>v0.14</small></h1>
+  <h1>紋づくり<small>v0.15</small></h1>
   <div class="tabs">
     <button class="tab on" data-tab="trace">写す</button>
     <button class="tab" data-tab="draw">描く</button>
@@ -127,22 +139,23 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
 </header>
 <main>
   <aside id="traceSide">
-    <h2>画像</h2>
+    <div class="secbar"><button data-all="1">ぜんぶ開く</button><button data-all="0">ぜんぶたたむ</button></div>
+    <details class="sec" open data-sec="trace-画像を入れる"><summary><span class="ic">🖼️</span><span class="tt">画像を入れる</span></summary><div class="body">
     <button class="btn primary" id="openBtn">画像を開く</button>
     <button class="btn" id="sampleBtn">見本で試す</button>
     <input type="file" id="file" accept="image/*" hidden>
     <div class="note">ドラッグ＆ドロップ、貼り付け（Ctrl+V）でもOK</div>
-
-    <h2>白黒にする</h2>
+    </div></details>
+    <details class="sec" open data-sec="trace-白黒にする"><summary><span class="ic">🌗</span><span class="tt">白黒にする</span></summary><div class="body">
     <div class="row"><label>しきい値 <span class="v" id="thrV"></span></label><input type="range" id="thr" min="1" max="254" value="128"></div>
     <label class="chk"><input type="checkbox" id="invert">白黒を反転</label>
     <div class="row"><label>ゴミ取り（小さい点を無視） <span class="v" id="minAreaV"></span></label><input type="range" id="minArea" min="0" max="2000" step="10" value="80"></div>
-
-    <h2>輪郭</h2>
+    </div></details>
+    <details class="sec" open data-sec="trace-輪郭"><summary><span class="ic">〰️</span><span class="tt">輪郭</span></summary><div class="body">
     <div class="row"><label>なめらかさ <span class="v" id="smoothV"></span></label><input type="range" id="smooth" min="0" max="12" value="4"></div>
     <div class="row"><label>角の判定（小さいほど角が増える） <span class="v" id="cornerV"></span></label><input type="range" id="corner" min="20" max="90" value="40"></div>
-
-    <h2>カチッと整形</h2>
+    </div></details>
+    <details class="sec" open data-sec="trace-カチッと整形"><summary><span class="ic">📐</span><span class="tt">カチッと整形<small>直線・円にそろえる</small></span></summary><div class="body">
     <div class="row"><label>ゆるさ（許すズレ） <span class="v" id="tolV"></span></label><input type="range" id="tol" min="0.3" max="5" step="0.1" value="1.6"></div>
     <label class="chk"><input type="checkbox" id="useLine" checked>直線にする</label>
     <label class="chk"><input type="checkbox" id="useArc" checked>円・円弧にする</label>
@@ -150,8 +163,8 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
     <label class="chk"><input type="checkbox" id="snapCircle" checked>同心円・半径そろえ</label>
     <div class="note">線をクリックすると、その区間を「ベジェのまま」に固定（点線）。もう一回で戻る。</div>
     <button class="btn" id="resetOv">固定を全部戻す</button>
-
-    <h2>対称そろえ</h2>
+    </div></details>
+    <details class="sec" open data-sec="trace-対称そろえ"><summary><span class="ic">🌸</span><span class="tt">対称そろえ<small>回転・鏡でピッタリに</small></span></summary><div class="body">
     <label class="chk"><input type="checkbox" id="symOn">対称そろえを使う</label>
     <button class="btn primary" id="symAuto">自動で探す</button>
     <button class="btn" id="symCenterBtn">中心をクリックで指定</button>
@@ -168,8 +181,8 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
     <label class="chk"><input type="checkbox" id="symStraight" checked>傾きも直す（軸をまっすぐ縦に）</label>
     <label class="chk"><input type="checkbox" id="symVec" checked>形もピッタリコピー（線・円を完全一致）</label>
     <label class="chk"><input type="checkbox" id="symAxes" checked>軸を表示</label>
-
-    <h2>表示</h2>
+    </div></details>
+    <details class="sec" open data-sec="trace-表示"><summary><span class="ic">👀</span><span class="tt">表示</span></summary><div class="body">
     <div class="row"><label>下の画像の濃さ <span class="v" id="bgOpV"></span></label><input type="range" id="bgOp" min="0" max="100" value="35"></div>
     <label class="chk"><input type="checkbox" id="showBin">白黒にした画像を下に出す</label>
     <label class="chk"><input type="checkbox" id="showFill" checked>塗りを表示</label>
@@ -177,8 +190,8 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
     <label class="chk"><input type="checkbox" id="showDots" checked>角の点を表示</label>
     <div class="legend"><span><i style="background:var(--c-line)"></i>直線</span><span><i style="background:var(--c-arc)"></i>円・円弧</span><span><i style="background:var(--c-bez)"></i>ベジェ</span></div>
     <div class="stats" id="stats"></div>
-
-    <h2>書き出し</h2>
+    </div></details>
+    <details class="sec" open data-sec="trace-書き出し"><summary><span class="ic">💾</span><span class="tt">書き出し<small>SVG・PNG・パス</small></span></summary><div class="body">
     <div class="row"><select id="mode">
       <option value="all">輪郭そのまま（穴も含む）</option>
       <option value="outer">一番外側だけ（シルエット）</option>
@@ -189,11 +202,12 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
     <button class="btn" id="pngBtn">PNG保存</button>
     <button class="btn" id="copyBtn">パス(d)をコピー</button>
     <label class="chk"><input type="checkbox" id="pngTrans">PNGの背景を透明に</label>
-
-    <h2>描くへ送る</h2>
+    </div></details>
+    <details class="sec" open data-sec="trace-描くへ送る"><summary><span class="ic">➡️</span><span class="tt">描くへ送る</span></summary><div class="body">
     <label class="chk"><input type="checkbox" id="sendGuides" checked>対称の軸と円もガイドにする</label>
     <label class="chk"><input type="checkbox" id="sendUnder" checked>画像を下絵にする</label>
     <button class="btn primary" id="sendDraw">描くへ送る →</button>
+    </div></details>
   </aside>
 
   <section class="stage" id="stage">
@@ -209,7 +223,8 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
   </section>
 
   <aside id="drawSide" style="display:none">
-    <h2>ファイル</h2>
+    <div class="secbar"><button data-all="1">ぜんぶ開く</button><button data-all="0">ぜんぶたたむ</button></div>
+    <details class="sec" open data-sec="draw-ファイル"><summary><span class="ic">📁</span><span class="tt">ファイル<small>開く・保存・戻す</small></span></summary><div class="body">
     <button class="btn" id="dNew">新しく</button>
     <button class="btn" id="dOpen">開く</button>
     <button class="btn primary" id="dSave">保存</button>
@@ -217,8 +232,8 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
     <div class="note" id="dFileName">まだ保存してないダカラ</div>
     <input type="file" id="dFile" accept=".json,application/json" hidden>
     <div><button class="btn" id="dUndo">↶ 戻す</button><button class="btn" id="dRedo">↷ やり直す</button></div>
-
-    <h2>用紙と単位</h2>
+    </div></details>
+    <details class="sec" open data-sec="draw-用紙と単位"><summary><span class="ic">📄</span><span class="tt">用紙と単位<small>mm/px・原点</small></span></summary><div class="body">
     <div class="kv">単位 <select id="pUnit" style="width:auto"><option value="mm">mm</option><option value="px">px</option></select>
       用紙 <input type="number" class="num" id="pSize" step="any" min="0.1"> <span class="pu">mm</span> 四方</div>
     <div class="kv">原点 <select id="pOrigin" style="width:auto">
@@ -226,8 +241,8 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
       <option value="cd">まん中（下がプラス）</option>
       <option value="tl">左上（下がプラス）</option></select></div>
     <div class="note">長さの数字は全部この単位（角度は°）。単位や用紙を変えても形はそのまま、数字の見え方と書き出しの大きさが変わるヨ</div>
-
-    <h2>部品を足す（数字で）</h2>
+    </div></details>
+    <details class="sec" open data-sec="draw-部品を足す"><summary><span class="ic">🧩</span><span class="tt">部品を足す<small>円・輪・四角・太線…</small></span></summary><div class="body">
     <div class="kv">形 <select id="partType" style="width:auto">
       <option value="circle">円</option><option value="ring">輪</option><option value="rect">四角</option>
       <option value="poly">多角形</option><option value="bar">太線</option><option value="pts">点を並べる</option></select>
@@ -235,17 +250,17 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
     <div id="partFields"></div>
     <button class="btn primary" id="partAdd">＋追加</button>
     <div class="note" id="partNote"></div>
-
-    <h2>レイヤー（上ほど後から重なる）</h2>
+    </div></details>
+    <details class="sec" open data-sec="draw-レイヤー"><summary><span class="ic">🗂️</span><span class="tt">レイヤー<small>上ほど後から重なる</small></span></summary><div class="body">
     <div id="layerList" class="list"></div>
-
-    <h2>回す・裏返す・コピー</h2>
+    </div></details>
+    <details class="sec" open data-sec="draw-回す・裏返す・コピー"><summary><span class="ic">🔄</span><span class="tt">回す・裏返す・コピー<small>選んだ形をまとめて</small></span></summary><div class="body">
     <div id="xform" class="note">レイヤーを選んでネ。Shift（かCtrl）を押しながらクリックで何枚もいっしょに選べる</div>
-
-    <h2>選んだもの</h2>
+    </div></details>
+    <details class="sec" open data-sec="draw-選んだものを直す"><summary><span class="ic">✏️</span><span class="tt">選んだものを直す<small>点・線・円の数字</small></span></summary><div class="body">
     <div id="inspector" class="note">レイヤーを選んで、点や線をクリックしてネ</div>
-
-    <h2>ガイド</h2>
+    </div></details>
+    <details class="sec" open data-sec="draw-ガイドと吸いつき"><summary><span class="ic">📏</span><span class="tt">ガイドと吸いつき<small>線・円・放射・方眼</small></span></summary><div class="body">
     <button class="btn" id="gLine">＋縦線</button>
     <button class="btn" id="gHLine">＋横線</button>
     <button class="btn" id="gRadial">＋放射</button>
@@ -259,14 +274,14 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
     <label class="chk"><input type="checkbox" id="snapNodes" checked>ほかの点にも吸いつく</label>
     <div class="kv">矢印キーで動く量 <input type="number" class="num" id="nudge" step="any" min="0"> <span class="pu">mm</span>（Shiftで10倍）</div>
     <div class="note">ガイドは画面でつかんで動かせる（縦線は左右、横線は上下、円は輪で半径・まん中で位置）。方眼があると、ガイドは方眼にカチッと吸いつく。Altキーを押しながらだと吸いつかない。矢印キーで、選んだ点・線・円・レイヤーを少しずつ動かせる（動く量は上で決める）。</div>
-
-    <h2>下絵</h2>
+    </div></details>
+    <details class="sec" open data-sec="draw-下絵"><summary><span class="ic">🗺️</span><span class="tt">下絵<small>なぞる元の画像</small></span></summary><div class="body">
     <label class="chk"><input type="checkbox" id="uShow" checked>下絵を表示</label>
     <div class="row"><label>下絵の濃さ <span class="v"><input type="number" class="num" id="uOp" value="30" min="0" max="100" step="1">%</span></label></div>
     <button class="btn" id="uOpen">下絵の画像を開く</button>
     <input type="file" id="uFile" accept="image/*" hidden>
-
-    <h2>書き出し</h2>
+    </div></details>
+    <details class="sec" open data-sec="draw-書き出し"><summary><span class="ic">💾</span><span class="tt">書き出し<small>SVG・PNG・パス</small></span></summary><div class="body">
     <div class="row"><select id="dMode">
       <option value="all">輪郭そのまま（穴も含む）</option>
       <option value="outer">一番外側だけ（シルエット）</option>
@@ -280,6 +295,7 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
     <button class="btn" id="dCopy">パス(d)をコピー</button>
     <label class="chk"><input type="checkbox" id="dPngTrans">PNGの背景を透明に</label>
     <div class="note" id="dExpNote"></div>
+    </div></details>
   </aside>
 
   <section class="stage" id="dstage" style="display:none">
@@ -945,6 +961,18 @@ if (typeof module !== 'undefined') module.exports = Core;
 
 <script>
 // ===================== 画面 =====================
+// カードの開け閉めを覚える
+(() => {
+  let st = {}; try { st = JSON.parse(localStorage.getItem('monzukuri-secs') || '{}'); } catch {}
+  const save = () => { try { localStorage.setItem('monzukuri-secs', JSON.stringify(st)); } catch {} };
+  document.querySelectorAll('details.sec').forEach(d => {
+    if (st[d.dataset.sec] === false) d.open = false;
+    d.addEventListener('toggle', () => { st[d.dataset.sec] = d.open; save(); });
+  });
+  document.querySelectorAll('.secbar button').forEach(b => b.onclick = () => {
+    b.closest('aside').querySelectorAll('details.sec').forEach(d => d.open = b.dataset.all === '1');
+  });
+})();
 const $ = id => document.getElementById(id);
 const S = { gray: null, w: 0, h: 0, imgURL: '', binURL: '', symURL: '', res: null, ov: new Set(), vb: null, tol: 1.6,
   symC: null, symK: 0, symCache: null, clickMode: null, symCopies: 0 };
