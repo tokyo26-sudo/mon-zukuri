@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>紋づくり v0.16</title>
+<title>紋づくり v0.18</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%238a2b1d'/><circle cx='32' cy='32' r='24.5' fill='none' stroke='%23fff' stroke-width='5'/><g fill='%23fff'><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%280 32 32%29'/><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%2890 32 32%29'/><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%28180 32 32%29'/><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%28270 32 32%29'/></g><circle cx='32' cy='32' r='3.4' fill='%238a2b1d'/></svg>">
 <style>
 :root{
@@ -111,11 +111,16 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
 .gbadge.r-tan{background:var(--r-tan)} .gbadge.r-con{background:var(--r-con)} .gbadge.r-thru{background:var(--r-thru)} .gbadge.r-cross{background:var(--r-cross)}
 .li.gon{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent);background:color-mix(in srgb,var(--accent) 7%,var(--bg))}
 .li.grel{border-color:var(--guide)}
+.li.ghid{opacity:.5}
 .li .gname{width:72px;border:none;border-bottom:1px dashed var(--line);background:transparent;color:var(--ink);font-size:12px;padding:1px 2px}
 .grel-box{width:100%;font-size:12px;line-height:2;margin-top:2px;padding-top:4px;border-top:1px dashed var(--line)}
 .grel-box b{font-weight:600;margin-right:3px}
 .band{fill:var(--accent);fill-opacity:.08;stroke:var(--accent);stroke-width:1;stroke-dasharray:4 3;vector-effect:non-scaling-stroke}
 #dview.space{cursor:grab}
+#dview.bucket{cursor:cell}
+.bhov{fill:var(--accent);fill-opacity:.28;stroke:var(--accent);stroke-width:1.5;vector-effect:non-scaling-stroke;pointer-events:none}
+.bhov.erase{fill:#fff;fill-opacity:.45;stroke-dasharray:4 3}
+#bkOn.on{background:var(--accent);color:var(--accent-ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 30%,transparent)}
 .hit[data-seg]:hover{stroke:var(--accent);stroke-opacity:.25}
 .sseg{fill:none;stroke:var(--accent);stroke-width:2;vector-effect:non-scaling-stroke;pointer-events:none}
 .sseg.on{stroke-width:5}
@@ -147,7 +152,7 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
 </head>
 <body>
 <header>
-  <h1>紋づくり<small>v0.16</small></h1>
+  <h1>紋づくり<small>v0.18</small></h1>
   <div class="tabs">
     <button class="tab on" data-tab="trace">写す</button>
     <button class="tab" data-tab="draw">描く</button>
@@ -289,6 +294,7 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
     <div class="kv">「接する」とみなすズレ <input type="number" class="num" id="gTol" step="any" min="0" style="width:64px"> <span class="pu">mm</span></div>
     <div class="legend" style="margin:4px 0 2px"><span><i style="background:var(--r-tan)"></i>接する</span><span><i style="background:var(--r-con)"></i>同じ中心</span><span><i style="background:var(--r-thru)"></i>中心を通る</span><span><i style="background:var(--r-cross)"></i>交わる</span></div>
     <div class="note">カードか画面のガイドをクリックで選ぶ。選んだガイドが太く光って、関係のあるガイドが色で分かるヨ</div>
+    <div class="kv"><button class="btn" id="gShowAll">ぜんぶ表示にもどす</button><button class="btn" id="gDelHidden">かくしてるガイドを消す</button></div>
     <div id="guideList" class="list"></div>
     <label class="chk"><input type="checkbox" id="gFront" checked>ガイドを形の上に出す（Gキーで切り替え）</label>
     <label class="chk"><input type="checkbox" id="gLock">ガイドをロック（さわれない、吸いつきは効く）</label>
@@ -297,6 +303,13 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
     <label class="chk"><input type="checkbox" id="snapNodes" checked>ほかの点にも吸いつく</label>
     <div class="kv">矢印キーで動く量 <input type="number" class="num" id="nudge" step="any" min="0"> <span class="pu">mm</span>（Shiftで10倍）</div>
     <div class="note">ガイドは画面でつかんで動かせる（縦線は左右、横線は上下、円は輪で半径・まん中で位置）。方眼があると、ガイドは方眼にカチッと吸いつく。Altキーを押しながらだと吸いつかない。矢印キーで、選んだ点・線・円・レイヤーを少しずつ動かせる（動く量は上で決める）。</div>
+    </div></details>
+    <details class="sec" open data-sec="draw-バケツ"><summary><span class="ic">🪣</span><span class="tt">割付バケツ<small>ガイドで区切られた所を塗る</small></span></summary><div class="body">
+    <button class="btn primary" id="bkOn">🪣 バケツで塗る（Bキー）</button>
+    <div class="note" id="bkInfo">ガイドの線と円で区切られた「区画」をクリックで塗る・もう一回で消す。ドラッグでなぞると続けて塗れるヨ</div>
+    <label class="chk"><input type="checkbox" id="bkRadial" checked>放射の線も区切りに使う</label>
+    <label class="chk"><input type="checkbox" id="bkGrid">方眼も区切りに使う（マスが多いと重い）</label>
+    <div class="note">塗る先：選んでいるレイヤー。選んでないときは新しく「塗り」レイヤーを作るダカラ</div>
     </div></details>
     <details class="sec" open data-sec="draw-下絵"><summary><span class="ic">🗺️</span><span class="tt">下絵<small>なぞる元の画像</small></span></summary><div class="body">
     <label class="chk"><input type="checkbox" id="uShow" checked>下絵を表示</label>
@@ -1685,6 +1698,30 @@ const Draw = (() => {
     if (b.type === 'line' && a.type === 'radial') return lineCirc(b, { x: a.x, y: a.y, r: -1e9 }) === 'thru' ? 'thru' : null;
     return null;
   }
+  // ガイドの回転コピー・鏡コピー（中心は「回す・裏返す」と同じ）
+  function guideT(g, kind, c, th) {
+    const q = clone(g), deg = th * 180 / Math.PI;
+    if (kind === 'rot') {
+      const x = g.x - c[0], y = g.y - c[1], ca = Math.cos(th), sa = Math.sin(th);
+      q.x = f3(c[0] + ca * x - sa * y); q.y = f3(c[1] + sa * x + ca * y);
+      if (q.type === 'line') q.ang = f3(g.ang + deg); if (q.type === 'radial') q.off = f3(g.off + deg);
+    } else if (kind === 'mh') {
+      q.x = f3(2 * c[0] - g.x);
+      if (q.type === 'line') q.ang = f3(180 - g.ang); if (q.type === 'radial') q.off = f3(180 - g.off);
+    } else {
+      q.y = f3(2 * c[1] - g.y);
+      if (q.type === 'line') q.ang = f3(-g.ang); if (q.type === 'radial') q.off = f3(-g.off);
+    }
+    return q;
+  }
+  function guideCopy(gi, kind) {
+    const g = D.doc.guides[gi], c = xCenter(), n = D.gxn || 5, base = g.name || '';
+    const out = [];
+    if (kind === 'rc') for (let k = 1; k < n; k++) { const q = guideT(g, 'rot', c, k * 2 * Math.PI / n); if (base) q.name = base + ' ' + (k + 1); out.push(q); }
+    else { const q = guideT(g, kind, c, 0); if (base) q.name = base + (kind === 'mh' ? '（左右）' : '（上下）'); out.push(q); }
+    change(() => D.doc.guides.push(...out));
+    toast(out.length + '個コピーしたダカラ');
+  }
   function guideRels(gi) {
     const out = {}; const g = D.doc.guides[gi]; if (!g) return out;
     D.doc.guides.forEach((o, j) => { if (j !== gi) { const r = guideRel(g, o); if (r) out[j] = r; } });
@@ -1696,6 +1733,17 @@ const Draw = (() => {
     if (scroll && D.gsel != null) { const el = document.querySelector(`#guideList .li[data-gi="${D.gsel}"]`); if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
   }
   $('gOnly').onchange = () => renderCanvas();
+  $('gShowAll').onclick = () => {
+    if ($('gOnly').checked) $('gOnly').checked = false;
+    if (!D.doc.guides.some(g => !g.vis)) { renderCanvas(); return toast('かくれてるガイドはないダカラ'); }
+    change(() => D.doc.guides.forEach(g => g.vis = true)); toast('ぜんぶ表示にもどしたダカラ');
+  };
+  $('gDelHidden').onclick = () => {
+    const n = D.doc.guides.filter(g => !g.vis).length;
+    if (!n) return toast('かくしてるガイドはないダカラ');
+    if (!confirm(`かくしてるガイド ${n}個を本当に消す？（Ctrl+Zで戻せるヨ）`)) return;
+    change(() => { const sel = D.doc.guides[D.gsel]; D.doc.guides = D.doc.guides.filter(g => g.vis); D.gsel = sel ? D.doc.guides.indexOf(sel) : null; if (D.gsel < 0) D.gsel = null; });
+  };
   $('gTol').onchange = () => { const v = parseFloat($('gTol').value); if (v >= 0) D.gtol = fromU(v); renderCanvas(); renderGuideList(); };
 
   function renderGuides() {
@@ -1839,7 +1887,7 @@ const Draw = (() => {
     const rels = D.gsel != null ? guideRels(D.gsel) : {};
     D.doc.guides.forEach((g, gi) => {
       const row = document.createElement('div');
-      row.className = 'li' + (gi === D.gsel ? ' gon' : rels[gi] ? ' grel' : ''); row.dataset.gi = gi;
+      row.className = 'li' + (gi === D.gsel ? ' gon' : rels[gi] ? ' grel' : '') + (g.vis ? '' : ' ghid'); row.dataset.gi = gi;
       const vis = document.createElement('input'); vis.type = 'checkbox'; vis.checked = g.vis; vis.title = '表示';
       vis.onchange = () => change(() => g.vis = vis.checked);
       const no = document.createElement('button'); no.className = 'gbadge' + (gi === D.gsel ? '' : rels[gi] ? ' r-' + rels[gi] : ''); no.textContent = gi + 1;
@@ -1887,13 +1935,26 @@ const Draw = (() => {
         }
         if (!any) rb.append('関係のあるガイドはないヨ（ズレの大きさを広げると見つかるかも）');
         const tools = document.createElement('div'); tools.style.marginTop = '4px';
-        btn(tools, '仲間以外のガイドを消す', () => {
+        btn(tools, '仲間以外をかくす', () => {
           const keep = new Set([gi, ...Object.keys(rels).map(Number)]);
-          const n = D.doc.guides.length - keep.size; if (!n) return toast('消すガイドはないダカラ');
-          if (!confirm(n + '個のガイドを消す？（方眼も消えるヨ）')) return;
-          change(() => { const old = D.doc.guides; D.doc.guides = old.filter((x, j) => keep.has(j)); D.gsel = D.doc.guides.indexOf(old[gi]); });
+          if (!D.doc.guides.some((x, j) => !keep.has(j) && x.vis)) return toast('かくすガイドはないダカラ');
+          change(() => D.doc.guides.forEach((x, j) => { if (!keep.has(j)) x.vis = false; }));
+          toast('仲間以外をかくしたダカラ（消えてないヨ）');
         });
         btn(tools, '選ぶのをやめる', () => selectGuide(null));
+        if (g.type !== 'grid') {
+          const cp = document.createElement('div'); cp.className = 'kv'; cp.style.marginTop = '6px';
+          const c = xCenter();
+          cp.append('コピーの中心');
+          numX(cp, 'X', c[0], v => { D.xc = [v, xCenter()[1]]; renderGuideList(); });
+          numY(cp, 'Y', c[1], v => { D.xc = [xCenter()[0], v]; renderGuideList(); });
+          const cp2 = document.createElement('div'); cp2.className = 'kv';
+          numField(cp2, '回転コピー', D.gxn || 5, v => D.gxn = Math.max(2, Math.min(72, Math.round(v))));
+          cp2.append('つ'); btn(cp2, 'コピー', () => guideCopy(gi, 'rc'));
+          const cp3 = document.createElement('div'); cp3.className = 'kv';
+          btn(cp3, '左右に鏡コピー', () => guideCopy(gi, 'mh')); btn(cp3, '上下に鏡コピー', () => guideCopy(gi, 'mv'));
+          rb.append(cp, cp2, cp3);
+        }
         rb.append(tools);
         row.append(rb);
       }
@@ -2282,6 +2343,274 @@ const Draw = (() => {
     });
   }
   // 合体：選んだレイヤーを順番どおりに足し引きして、1枚の形にする（円弧っぽいところは円弧に戻す）
+  // ---------- 割付バケツ ----------
+  D.bucket = false; D.faces = null;
+  function visGuidesForFaces() {
+    return D.doc.guides.filter(g => g.vis && !$('gHide').checked).filter(g => g.type !== 'grid' || $('bkGrid').checked).filter(g => g.type !== 'radial' || $('bkRadial').checked);
+  }
+  function buildFaces() {
+    if (!paperReady()) { toast('合成の部品が読めなかったダカラ'); return []; }
+    const gs = visGuidesForFaces(), key = JSON.stringify(gs.map(g => [g.type, g.x, g.y, g.r, g.ang, g.n, g.off, g.s]));
+    if (D.faces && D.faces.key === key) return D.faces.list;
+    const t0 = performance.now(), B = SIZE * 4;
+    const P = (pts) => new pp.Path({ segments: pts, closed: true, insert: false });
+    const cutters = [];
+    for (const g of gs) {
+      if (g.type === 'circle' && g.r > 0.5) cutters.push(new pp.Path.Circle({ center: [g.x, g.y], radius: g.r, insert: false }));
+      if (g.type === 'line') {
+        const a = g.ang * Math.PI / 180, d = [Math.cos(a), Math.sin(a)], n = [-d[1], d[0]];
+        cutters.push(P([[g.x + d[0] * B, g.y + d[1] * B], [g.x + d[0] * B + n[0] * B, g.y + d[1] * B + n[1] * B], [g.x - d[0] * B + n[0] * B, g.y - d[1] * B + n[1] * B], [g.x - d[0] * B, g.y - d[1] * B]]));
+      }
+      if (g.type === 'radial' && g.n >= 2) {
+        for (let k = 0; k < g.n; k++) {
+          const a0 = (g.off + k * 360 / g.n) * Math.PI / 180, a1 = (g.off + (k + 1) * 360 / g.n) * Math.PI / 180;
+          const pts = [[g.x, g.y]], steps = Math.max(2, Math.ceil((a1 - a0) / (Math.PI / 6)));
+          for (let j = 0; j <= steps; j++) { const a = a0 + (a1 - a0) * j / steps; pts.push([g.x + B * Math.cos(a), g.y + B * Math.sin(a)]); }
+          cutters.push(P(pts));
+        }
+      }
+      if (g.type === 'grid') {
+        const s = Math.max(0.5, g.s), xs = [], ys = [];
+        for (let x = g.x - Math.ceil(g.x / s) * s; x < SIZE - 1e-6; x += s) if (x > 1e-6) xs.push(x);
+        for (let y = g.y - Math.ceil(g.y / s) * s; y < SIZE - 1e-6; y += s) if (y > 1e-6) ys.push(y);
+        if (xs.length + ys.length > 80) { toast('方眼のマスが多すぎるダカラ、方眼は区切りに使わないヨ'); continue; }
+        for (const x of xs) cutters.push(P([[x, -B], [B, -B], [B, B], [x, B]]));
+        for (const y of ys) cutters.push(P([[-B, y], [B, y], [B, B], [-B, B]]));
+      }
+    }
+    let faces = [new pp.Path.Rectangle({ point: [0, 0], size: [SIZE, SIZE], insert: false })];
+    const ok = it => it && Math.abs(it.area) > 0.5;
+    for (const cut of cutters) {
+      const next = [];
+      for (const f of faces) {
+        // 線が通っていない区画は割らない（速くするため）
+        if (!f.bounds.intersects(cut.bounds)) { next.push(f); continue; }
+        // 線が交わっていなくても、区画の中にすっぽり入っている円は割る
+        if (!f.intersects(cut) && !f.contains(cut.interiorPoint)) { next.push(f); continue; }
+        const a = f.intersect(cut, { insert: false }), b = f.subtract(cut, { insert: false });
+        if (ok(a)) next.push(a); if (ok(b)) next.push(b);
+      }
+      faces = next;
+      if (faces.length > 3000) { toast('区画が多すぎるダカラ、途中で止めたヨ'); break; }
+    }
+    // 1つの区画がバラバラの島になってたら分ける（入れ子の深さで、外わくと穴を見分ける）
+    const list = [];
+    for (const f of faces) {
+      const kids = f.children ? f.children.slice() : [f];
+      if (kids.length > 1) {
+        const depth = kids.map(c => kids.filter(o => o !== c && Math.abs(o.area) > Math.abs(c.area) && o.contains(c.interiorPoint)).length);
+        const outers = kids.map((c, i) => i).filter(i => depth[i] % 2 === 0);
+        if (outers.length > 1) {
+          for (const oi of outers) {
+            const o = kids[oi];
+            const holes = kids.filter((c, j) => depth[j] === depth[oi] + 1 && o.contains(c.interiorPoint));
+            const cp = new pp.CompoundPath({ children: [o.clone({ insert: false }), ...holes.map(x => x.clone({ insert: false }))], insert: false }); cp.fillRule = 'evenodd';
+            if (ok(cp)) list.push(cp);
+          }
+          continue;
+        }
+      }
+      list.push(f);
+    }
+    D.faces = { key, list };
+    $('bkInfo').textContent = `区画 ${list.length}個（${Math.round(performance.now() - t0)}ms）。クリックで塗る・もう一回で消す。ドラッグでなぞると続けて塗れるヨ`;
+    return list;
+  }
+  function faceAt(p) {
+    const list = buildFaces(), pt = new pp.Point(p[0], p[1]);
+    let best = null;
+    for (const f of list) if (f.bounds.contains(pt) && f.contains(pt)) { if (!best || Math.abs(f.area) < Math.abs(best.area)) best = f; }
+    return best;
+  }
+  function layerItem(ly) { const cp = new pp.CompoundPath({ pathData: layerD(ly), insert: false }); cp.fillRule = 'evenodd'; return cp; }
+  function bucketTarget(create) {
+    const ly = curLayer();
+    if (ly && !ly.lock && ly.vis) return ly;
+    if (!create) return null;
+    D.doc.layers.push({ id: uid(), name: '塗り', op: 'add', vis: true, lock: false, loops: [] });
+    D.sel = { li: D.doc.layers.length - 1, kind: 'layer' }; D.msel.clear();
+    return D.doc.layers[D.doc.layers.length - 1];
+  }
+  // 塗った区画の番号を覚える（区画どうしはズレがないので、毎回区画から合体し直すときれい）
+  function bkState(ly) {
+    const F = D.faces; if (!F || !ly) return null;
+    if (ly.bk && ly.bk.key === F.key && ly.bk.d === layerD(ly)) return ly.bk;
+    // 覚えてない・ガイドが変わった・形を手で直した → いまの形に入っている区画を探して覚えなおす
+    if (!ly.loops.length) { ly.bk = { key: F.key, ids: [], d: layerD(ly) }; return ly.bk; }
+    const item = layerItem(ly), ids = [];
+    let sum = 0;
+    F.list.forEach((f, i) => { if (item.contains(f.interiorPoint)) { ids.push(i); sum += Math.abs(f.area); } });
+    if (Math.abs(sum - Math.abs(item.area)) < Math.max(5, Math.abs(item.area) * 0.003)) { ly.bk = { key: F.key, ids, d: layerD(ly) }; return ly.bk; }
+    ly.bk = null; return null;
+  }
+  function isFilled(ly, face) {
+    if (!ly || !ly.loops.length) return false;
+    const st = bkState(ly), idx = D.faces.list.indexOf(face);
+    if (st && idx >= 0) return st.ids.includes(idx);
+    return layerItem(ly).contains(face.interiorPoint);
+  }
+  function paintFace(ly, face, fill) {
+    const st = bkState(ly), idx = D.faces.list.indexOf(face);
+    let res = null;
+    if (st && idx >= 0) {
+      const ids = new Set(st.ids); fill ? ids.add(idx) : ids.delete(idx);
+      st.ids = [...ids].sort((a, b) => a - b);
+      for (const i of st.ids) { const f = D.faces.list[i]; res = res ? res.unite(f, { insert: false }) : f.clone({ insert: false }); }
+    } else {
+      // 形の中に区画で表せない部分があるとき：今までどおり足し引き
+      if (!ly.loops.length) { if (!fill) return; res = face.clone({ insert: false }); }
+      else { const cur = layerItem(ly); res = fill ? cur.unite(face, { insert: false }) : cur.subtract(face, { insert: false }); }
+    }
+    ly.loops = (res && Math.abs(res.area) > 0.5) ? cleanLoops(snapToGuides(dropTiny(pathToLoops(res)))) : [];
+    if (st && idx >= 0) { st.d = layerD(ly); ly.bk = st; }
+  }
+  // 円弧・直線を、ガイドの円と線にピッタリ合わせる（ベジェの近似を本物の円弧に戻す）
+  function snapToGuides(loops) {
+    const circles = D.doc.guides.filter(g => g.type === 'circle' && g.vis).map(g => ({ c: [g.x, g.y], r: g.r }));
+    const onC = (q, C, tol) => Math.abs(Math.hypot(q[0] - C.c[0], q[1] - C.c[1]) - C.r) < tol;
+    for (const L of loops) {
+      if (L.circle) { for (const C of circles) if (Math.hypot(L.circle.c[0] - C.c[0], L.circle.c[1] - C.c[1]) < 0.3 && Math.abs(L.circle.r - C.r) < 0.3) L.circle = { c: C.c.slice(), r: C.r }; continue; }
+      const n = L.nodes.length;
+      L.segs = L.segs.map((s, i) => {
+        if (s.type === 'L') return s;
+        const a = np(L.nodes[i]), b = np(L.nodes[(i + 1) % n]);
+        const mid = s.type === 'A' ? arcMid(a, b, s) : bez(a, s.c1, s.c2, b, 0.5);
+        const qs = s.type === 'A' ? [mid] : [0.25, 0.5, 0.75].map(t => bez(a, s.c1, s.c2, b, t));
+        // まっすぐなら直線
+        const ch = Math.hypot(b[0] - a[0], b[1] - a[1]);
+        if (s.type === 'B' && ch > 1e-6 && qs.every(q => Math.abs((q[0] - a[0]) * (b[1] - a[1]) - (q[1] - a[1]) * (b[0] - a[0])) / ch < 0.05)) return { type: 'L' };
+        for (const C of circles) {
+          const tol = Math.max(0.3, C.r * 6e-4);
+          if (onC(a, C, tol) && onC(b, C, tol) && qs.every(q => onC(q, C, tol))) {
+            const arc = arc3(a, mid, b); if (!arc) continue;
+            return { type: 'A', c: C.c.slice(), r: C.r, sweep: arc.sweep };
+          }
+        }
+        return s;
+      });
+    }
+    return loops;
+  }
+  // とても短い区間（交点のところにできるゴミ）を、点ごと取りのぞく
+  function dropTiny(loops, eps = 0.05) {
+    for (const L of loops) {
+      if (L.circle) continue;
+      for (let i = L.nodes.length - 1; i >= 0 && L.nodes.length > 2; i--) {
+        if (i >= L.nodes.length) continue;
+        const j = (i + 1) % L.nodes.length;
+        if (Math.hypot(L.nodes[i].x - L.nodes[j].x, L.nodes[i].y - L.nodes[j].y) < eps) {
+          L.segs.splice(i, 1); L.nodes.splice(j, 1);
+        }
+      }
+    }
+    return loops;
+  }
+  // 長さゼロの区間を消し、同じ円の上で続く円弧を1本にまとめ、つぶれた輪郭を捨てる
+  function cleanLoops(loops) {
+    const out = [];
+    for (const L0 of loops) {
+      if (L0.circle) { out.push(L0); continue; }
+      let L = { nodes: L0.nodes.slice(), segs: L0.segs.slice() };
+      // ゼロ長さ
+      for (let i = L.nodes.length - 1; i >= 0 && L.nodes.length > 2; i--) {
+        const j = (i + 1) % L.nodes.length;
+        if (Math.hypot(L.nodes[i].x - L.nodes[j].x, L.nodes[i].y - L.nodes[j].y) < 1e-3) { L.nodes.splice(j, 1); L.segs.splice(i, 1); if (j < i) { /* 最後と最初 */ } }
+      }
+      // 「行って戻る」だけのトゲを消す（同じ円・同じ線の上を往復している所）
+      const sameC = (a, b) => a.type === 'A' && b.type === 'A' && Math.abs(a.r - b.r) < 1e-6 && Math.hypot(a.c[0] - b.c[0], a.c[1] - b.c[1]) < 1e-6;
+      let spiked = true, guard = 0;
+      while (spiked && L.nodes.length > 2 && guard++ < 500) {
+        spiked = false;
+        const n = L.nodes.length;
+        for (let i = 0; i < n; i++) {
+          const j = (i + 1) % n, k = (i + 2) % n;
+          const s1 = L.segs[i], s2 = L.segs[j], A = np(L.nodes[i]), Bp = np(L.nodes[j]), C = np(L.nodes[k]);
+          let merged = null;
+          if (sameC(s1, s2) && s1.sweep !== s2.sweep) {
+            const net = arcLarge(A, Bp, s1).d - arcLarge(Bp, C, s2).d;
+            merged = Math.abs(net) < 1e-4 ? 'zero' : Object.assign(clone(s1), { sweep: net > 0 ? s1.sweep : s2.sweep });
+          } else if (s1.type === 'L' && s2.type === 'L') {
+            const u = sub(Bp, A), v = sub(C, Bp), cr = u[0] * v[1] - u[1] * v[0], dt = u[0] * v[0] + u[1] * v[1];
+            if (dt < 0 && Math.abs(cr) < 0.01 * Math.hypot(...u) * Math.hypot(...v) + 1e-9) merged = Math.hypot(C[0] - A[0], C[1] - A[1]) < 0.05 ? 'zero' : { type: 'L' };
+          }
+          if (!merged) continue;
+          const nn = [], ns2 = [];
+          if (merged === 'zero' || Math.hypot(C[0] - A[0], C[1] - A[1]) < 0.05) {
+            // 行って戻るだけ：j と k を取って、i から k の次へ
+            for (let x = 0; x < n; x++) { if (x === j || x === k) continue; nn.push(L.nodes[x]); ns2.push(x === i ? L.segs[k] : L.segs[x]); }
+          } else {
+            // 行き過ぎて戻る：j を取って、i から k へ1本で
+            for (let x = 0; x < n; x++) { if (x === j) continue; nn.push(L.nodes[x]); ns2.push(x === i ? merged : L.segs[x]); }
+          }
+          L.nodes = nn; L.segs = ns2;
+          spiked = true; break;
+        }
+      }
+      // 同じ円の円弧をまとめる
+      const same = (a, b) => a.type === 'A' && b.type === 'A' && a.sweep === b.sweep && Math.abs(a.r - b.r) < 1e-6 && Math.hypot(a.c[0] - b.c[0], a.c[1] - b.c[1]) < 1e-6;
+      let changed = true;
+      while (changed && L.nodes.length > 2) {
+        changed = false;
+        const n = L.nodes.length;
+        for (let i = 0; i < n; i++) {
+          const pi = (i - 1 + n) % n;
+          if (!same(L.segs[pi], L.segs[i])) continue;
+          const a = np(L.nodes[pi]), m = np(L.nodes[i]), b = np(L.nodes[(i + 1) % n]);
+          if (arcLarge(a, m, L.segs[pi]).d + arcLarge(m, b, L.segs[i]).d > TAU - 0.02) continue;
+          L.nodes.splice(i, 1); L.segs.splice(i, 1);
+          if (i === 0) { /* 前の区間は最後の要素 */ }
+          changed = true; break;
+        }
+      }
+      // まっすぐ続く直線もまとめる
+      changed = true;
+      while (changed && L.nodes.length > 3) {
+        changed = false;
+        const n = L.nodes.length;
+        for (let i = 0; i < n; i++) {
+          const pi = (i - 1 + n) % n;
+          if (L.segs[pi].type !== 'L' || L.segs[i].type !== 'L') continue;
+          const a = np(L.nodes[pi]), m = np(L.nodes[i]), b = np(L.nodes[(i + 1) % n]);
+          const cr = (m[0] - a[0]) * (b[1] - a[1]) - (m[1] - a[1]) * (b[0] - a[0]), ln = Math.hypot(b[0] - a[0], b[1] - a[1]);
+          if (ln > 1e-6 && Math.abs(cr) / ln < 0.01 && ((m[0] - a[0]) * (b[0] - m[0]) + (m[1] - a[1]) * (b[1] - m[1])) > 0) { L.nodes.splice(i, 1); L.segs.splice(i, 1); changed = true; break; }
+        }
+      }
+      // 面積がほぼゼロの輪郭は捨てる
+      const pts = []; const n = L.nodes.length;
+      for (let i = 0; i < n; i++) {
+        const a = np(L.nodes[i]), b = np(L.nodes[(i + 1) % n]), s = L.segs[i];
+        pts.push(a);
+        if (s.type === 'A') for (let t = 1; t < 8; t++) pts.push(arcPoint(a, b, s, t / 8));
+        if (s.type === 'B') for (let t = 1; t < 8; t++) pts.push(bez(a, s.c1, s.c2, b, t / 8));
+      }
+      let ar = 0; for (let i = 0; i < pts.length; i++) { const p = pts[i], q = pts[(i + 1) % pts.length]; ar += p[0] * q[1] - q[0] * p[1]; }
+      if (n < 2 || Math.abs(ar / 2) < 0.5) continue;
+      // 全部同じ円の円弧で一周してたら「円」に
+      if (L.segs.every(s => same(s, L.segs[0])) && Math.abs(L.segs.reduce((acc, s, i) => acc + arcLarge(np(L.nodes[i]), np(L.nodes[(i + 1) % n]), s).d, 0) - TAU) < 0.02) { out.push({ circle: { c: L.segs[0].c.slice(), r: L.segs[0].r } }); continue; }
+      L.nodes.forEach((nd, i) => { const sp = L.segs[(i - 1 + n) % n], sn = L.segs[i]; nd.smooth = same(sp, sn); });
+      out.push(L);
+    }
+    return out;
+  }
+  function setBucket(on) {
+    D.bucket = on; $('bkOn').classList.toggle('on', on); dv.classList.toggle('bucket', on);
+    $('bkOn').textContent = on ? '🪣 バケツをやめる（Bキー）' : '🪣 バケツで塗る（Bキー）';
+    $('dsnap').textContent = '';
+    if (on) { buildFaces(); toast('バケツモード：区画をクリックで塗るダカラ'); }
+  }
+  $('bkOn').onclick = () => setBucket(!D.bucket);
+  $('bkGrid').onchange = $('bkRadial').onchange = () => { D.faces = null; if (D.bucket) buildFaces(); };
+  function drawHover(face, erase) {
+    const g = $('dsnap'); g.textContent = '';
+    if (face) ns('path', { d: face.pathData, class: 'bhov' + (erase ? ' erase' : ''), 'fill-rule': 'evenodd' }, g);
+  }
+  dv.addEventListener('mousemove', e => {
+    if (!D.bucket || D.drag || D.space) return;
+    const f = faceAt(toDoc(e)), ly = bucketTarget(false);
+    drawHover(f, f && isFilled(ly, f));
+  });
+  dv.addEventListener('mouseleave', () => { if (D.bucket && !D.drag) $('dsnap').textContent = ''; });
+
   function mergeSel() {
     const T = targets(); if (T.length < 2) return toast('2枚以上選んでネ（Shift＋クリック）');
     if (!paperReady()) return toast('合成の部品が読めなかったダカラ');
@@ -2292,7 +2621,7 @@ const Draw = (() => {
       else if (res) res = res.subtract(cp, { insert: false });
     }
     if (!res || Math.abs(res.area) < 1e-6) return toast('合体したら何も残らなかったダカラ');
-    const loops = pathToLoops(res);
+    const loops = cleanLoops(snapToGuides(dropTiny(pathToLoops(res))));
     change(() => {
       const L = D.doc.layers, first = Math.min(...T.map(o => o.i)), ids = new Set(T.map(o => o.ly.id));
       const nl = { id: uid(), name: '合体', op: 'add', vis: true, lock: false, loops };
@@ -2437,6 +2766,15 @@ const Draw = (() => {
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
     const t = e.target, ds = t.dataset, p0 = toDoc(e);
     const base = { x: e.clientX, y: e.clientY, moved: false, alt: e.altKey, p0, prev: snapshotBefore() };
+    if (D.bucket && e.button === 0 && !D.space) {
+      const f = faceAt(p0); if (!f) return;
+      const prevLayers = JSON.stringify(D.doc);
+      const exist = bucketTarget(false), fill = !isFilled(exist, f);
+      const ly = bucketTarget(fill); if (!ly) return;
+      paintFace(ly, f, fill);
+      D.drag = { mode: 'bucket', x: e.clientX, y: e.clientY, moved: true, prev: prevLayers, fill, lid: ly.id, done: new Set([f]) };
+      renderCanvas(); drawHover(f, !fill); return;
+    }
     if (D.space || e.button === 1) { e.preventDefault(); D.drag = Object.assign(base, { mode: 'pan', vb: Object.assign({}, D.vb), target: dv, nosel: true }); return; }
     if (ds.h && D.sel) {
       const li = D.sel.li, ly = D.doc.layers[li], lp = +ds.loop, L = ly.loops[lp];
@@ -2651,6 +2989,13 @@ const Draw = (() => {
     }
     if (d.mode === 'guide') { dragGuide(d, e); renderCanvas(); return; }
     if (d.mode === 'seg') { dragSeg(d, e); renderCanvas(); return; }
+    if (d.mode === 'bucket') {
+      const f = faceAt(toDoc(e)); if (!f || d.done.has(f)) return;
+      d.done.add(f);
+      const ly = D.doc.layers.find(l => l.id === d.lid); if (!ly) return;
+      if (isFilled(ly, f) !== d.fill) { paintFace(ly, f, d.fill); renderCanvas(); }
+      drawHover(f, !d.fill); return;
+    }
     if (d.mode === 'band') {
       const m = toDoc(e), g = $('dsnap'); g.textContent = '';
       ns('rect', { x: Math.min(m[0], d.p0[0]), y: Math.min(m[1], d.p0[1]), width: Math.abs(m[0] - d.p0[0]), height: Math.abs(m[1] - d.p0[1]), class: 'band' }, g);
@@ -2692,6 +3037,7 @@ const Draw = (() => {
     D.drag = null; D.snapMk = null; dv.classList.remove('drag');
     if (d.mode === 'guide' && !d.moved) { selectGuide(d.gi, true); return; }
     if (d.mode === 'handle' || d.mode === 'guide' || (d.mode === 'seg' && d.moved)) { if (d.moved) { pushState(d.prev); if (d.mode === 'seg') D.sel = { li: d.li, kind: 'seg', loop: d.loop, i: d.i }; } renderAll(); return; }
+    if (d.mode === 'bucket') { pushState(d.prev); renderAll(); return; }
     if (d.mode === 'pick' && d.moved) { if (d.ids) { pushState(d.prev); renderAll(); } return; }
     if (d.mode === 'band') { $('dsnap').textContent = ''; if (d.moved && d.p1) bandSelect(d.p0, d.p1); return; }
     if (d.moved || d.nosel) { renderCanvas(); return; }
@@ -2712,6 +3058,8 @@ const Draw = (() => {
     if (tag === 'input' || tag === 'select' || tag === 'textarea') return;
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); return; }
+    if (e.key === 'Escape' && D.bucket) { setBucket(false); return; }
+    if ((e.key === 'b' || e.key === 'B') && !e.ctrlKey && !e.metaKey && !e.altKey) { setBucket(!D.bucket); return; }
     if (e.key === 'Escape' && D.gsel != null) { selectGuide(null); return; }
     if (e.key === ' ') { e.preventDefault(); if (!D.space) { D.space = true; dv.classList.add('space'); } return; }
     if ((e.key === 'g' || e.key === 'G') && !e.ctrlKey && !e.metaKey && !e.altKey) { $('gFront').checked = !$('gFront').checked; renderCanvas(); toast($('gFront').checked ? 'ガイドを上に出したダカラ' : 'ガイドを下にかくしたダカラ'); return; }
@@ -2961,7 +3309,7 @@ const Draw = (() => {
 
   function shown() { if (!D.vb) fit(); else renderAll(); requestAnimationFrame(() => { if (!D.vb) fit(); renderAll(); }); }
   renderAll();
-  return { receive, shown, D, exportData, undo };
+  return { receive, shown, D, exportData, undo, _dbg: { buildFaces, faceAt, paintFace, pathToLoops, snapToGuides, layerD } };
 })();
 window.Draw = Draw;
 
