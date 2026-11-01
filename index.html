@@ -3,25 +3,25 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>紋づくり v0.15</title>
+<title>紋づくり v0.16</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%238a2b1d'/><circle cx='32' cy='32' r='24.5' fill='none' stroke='%23fff' stroke-width='5'/><g fill='%23fff'><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%280 32 32%29'/><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%2890 32 32%29'/><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%28180 32 32%29'/><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%28270 32 32%29'/></g><circle cx='32' cy='32' r='3.4' fill='%238a2b1d'/></svg>">
 <style>
 :root{
   --bg:#f6f4ef; --panel:#ffffff; --ink:#1d1b18; --sub:#6b665e; --line:#e2ddd3;
   --accent:#8a2b1d; --accent-ink:#fff; --canvas:#ebe7de;
-  --c-line:#1f6fd1; --c-arc:#15924a; --c-bez:#8a8a8a; --c-fill:rgba(20,20,20,.18); --guide:#1c9bb3;
+  --c-line:#1f6fd1; --c-arc:#15924a; --c-bez:#8a8a8a; --c-fill:rgba(20,20,20,.18); --guide:#1c9bb3; --r-tan:#e8780c; --r-con:#1d9a4c; --r-thru:#9a3fd0; --r-cross:#5aa7d6;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#1a1917; --panel:#24221f; --ink:#ece8e1; --sub:#a39d93; --line:#3a3732;
     --accent:#d0604c; --accent-ink:#fff; --canvas:#2c2a26;
-    --c-line:#5aa2ff; --c-arc:#3fd07c; --c-bez:#9a9a9a; --c-fill:rgba(255,255,255,.12); --guide:#4fd0e6;
+    --c-line:#5aa2ff; --c-arc:#3fd07c; --c-bez:#9a9a9a; --c-fill:rgba(255,255,255,.12); --guide:#4fd0e6; --r-tan:#ffa040; --r-con:#4fd38a; --r-thru:#c88cff; --r-cross:#8cc8ee;
   }
 }
 :root[data-theme="dark"]{
   --bg:#1a1917; --panel:#24221f; --ink:#ece8e1; --sub:#a39d93; --line:#3a3732;
   --accent:#d0604c; --accent-ink:#fff; --canvas:#2c2a26;
-  --c-line:#5aa2ff; --c-arc:#3fd07c; --c-bez:#9a9a9a; --c-fill:rgba(255,255,255,.12); --guide:#4fd0e6;
+  --c-line:#5aa2ff; --c-arc:#3fd07c; --c-bez:#9a9a9a; --c-fill:rgba(255,255,255,.12); --guide:#4fd0e6; --r-tan:#ffa040; --r-con:#4fd38a; --r-thru:#c88cff; --r-cross:#8cc8ee;
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
@@ -98,6 +98,22 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
 .fhit{fill:transparent;stroke:none;pointer-events:fill;cursor:move}
 .lo.ms{stroke:var(--accent);stroke-width:1.8;opacity:1}
 .glock .ghit,.glock .gctr{pointer-events:none}
+.gd.dim{opacity:.18}
+.gd.gsel{stroke:var(--accent);stroke-width:3;stroke-dasharray:none;opacity:1}
+.gd.r-tan{stroke:var(--r-tan);stroke-width:2.4;stroke-dasharray:none}
+.gd.r-con{stroke:var(--r-con);stroke-width:2.4;stroke-dasharray:none}
+.gd.r-thru{stroke:var(--r-thru);stroke-width:2.4;stroke-dasharray:none}
+.gd.r-cross{stroke:var(--r-cross);stroke-width:1.8;stroke-dasharray:6 3}
+.gno{font-weight:700;fill:var(--guide);stroke:var(--canvas);paint-order:stroke;stroke-linejoin:round;pointer-events:none;user-select:none}
+.gno.dim{opacity:.25}
+.gno.gsel{fill:var(--accent)} .gno.r-tan{fill:var(--r-tan)} .gno.r-con{fill:var(--r-con)} .gno.r-thru{fill:var(--r-thru)} .gno.r-cross{fill:var(--r-cross)}
+.gbadge{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:20px;padding:0 5px;border-radius:10px;background:var(--guide);color:#fff;font-size:12px;font-weight:700;cursor:pointer;border:none}
+.gbadge.r-tan{background:var(--r-tan)} .gbadge.r-con{background:var(--r-con)} .gbadge.r-thru{background:var(--r-thru)} .gbadge.r-cross{background:var(--r-cross)}
+.li.gon{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent);background:color-mix(in srgb,var(--accent) 7%,var(--bg))}
+.li.grel{border-color:var(--guide)}
+.li .gname{width:72px;border:none;border-bottom:1px dashed var(--line);background:transparent;color:var(--ink);font-size:12px;padding:1px 2px}
+.grel-box{width:100%;font-size:12px;line-height:2;margin-top:2px;padding-top:4px;border-top:1px dashed var(--line)}
+.grel-box b{font-weight:600;margin-right:3px}
 .band{fill:var(--accent);fill-opacity:.08;stroke:var(--accent);stroke-width:1;stroke-dasharray:4 3;vector-effect:non-scaling-stroke}
 #dview.space{cursor:grab}
 .hit[data-seg]:hover{stroke:var(--accent);stroke-opacity:.25}
@@ -131,7 +147,7 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
 </head>
 <body>
 <header>
-  <h1>紋づくり<small>v0.15</small></h1>
+  <h1>紋づくり<small>v0.16</small></h1>
   <div class="tabs">
     <button class="tab on" data-tab="trace">写す</button>
     <button class="tab" data-tab="draw">描く</button>
@@ -205,6 +221,7 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
     </div></details>
     <details class="sec" open data-sec="trace-描くへ送る"><summary><span class="ic">➡️</span><span class="tt">描くへ送る</span></summary><div class="body">
     <label class="chk"><input type="checkbox" id="sendGuides" checked>対称の軸と円もガイドにする</label>
+    <div class="kv">円ガイドは大きい順に <input type="number" class="num" id="sendCircN" value="8" min="0" max="50" step="1" style="width:56px"> 個まで</div>
     <label class="chk"><input type="checkbox" id="sendUnder" checked>画像を下絵にする</label>
     <button class="btn primary" id="sendDraw">描くへ送る →</button>
     </div></details>
@@ -266,6 +283,12 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
     <button class="btn" id="gRadial">＋放射</button>
     <button class="btn" id="gCircle">＋円</button>
     <button class="btn" id="gGrid">＋方眼</button>
+    <div id="gTools" class="kv">
+      <label class="chk" style="margin:0"><input type="checkbox" id="gOnly">選んだガイドと仲間だけ表示</label>
+    </div>
+    <div class="kv">「接する」とみなすズレ <input type="number" class="num" id="gTol" step="any" min="0" style="width:64px"> <span class="pu">mm</span></div>
+    <div class="legend" style="margin:4px 0 2px"><span><i style="background:var(--r-tan)"></i>接する</span><span><i style="background:var(--r-con)"></i>同じ中心</span><span><i style="background:var(--r-thru)"></i>中心を通る</span><span><i style="background:var(--r-cross)"></i>交わる</span></div>
+    <div class="note">カードか画面のガイドをクリックで選ぶ。選んだガイドが太く光って、関係のあるガイドが色で分かるヨ</div>
     <div id="guideList" class="list"></div>
     <label class="chk"><input type="checkbox" id="gFront" checked>ガイドを形の上に出す（Gキーで切り替え）</label>
     <label class="chk"><input type="checkbox" id="gLock">ガイドをロック（さわれない、吸いつきは効く）</label>
@@ -1595,8 +1618,11 @@ const Draw = (() => {
   function guideGeoms(skip = -1) {
     const G = [], pts = [];
     if ($('gHide').checked) { D.geoms = G; D.ipts = pts; return; }
+    // 「選んだガイドと仲間だけ表示」のときは、見えているガイドだけで交点・吸いつきを作る
+    let keep = null;
+    if ($('gOnly').checked && D.gsel != null && D.doc.guides[D.gsel]) { keep = new Set([D.gsel, ...Object.keys(guideRels(D.gsel)).map(Number)]); }
     D.doc.guides.forEach((g, gi) => {
-      if (!g.vis || gi === skip) return;
+      if (!g.vis || gi === skip || (keep && !keep.has(gi))) return;
       if (g.type === 'line') { const a = g.ang * Math.PI / 180; G.push({ k: 'line', gi, p: [g.x, g.y], d: [Math.cos(a), Math.sin(a)] }); }
       if (g.type === 'radial') {
         pts.push([g.x, g.y]);
@@ -1632,6 +1658,46 @@ const Draw = (() => {
     D.geoms = G; D.ipts = ip.concat(pts);
   }
 
+  // ---------- ガイドどうしの関係 ----------
+  D.gsel = null; D.gtol = 6;
+  const REL_NAME = { tan: '接する', con: '同じ中心', thru: '中心を通る', cross: '交わる' };
+  function guideRel(a, b) {
+    const ctr = g => [g.x, g.y], tol = D.gtol;
+    if (a.type === 'grid' || b.type === 'grid') return null;
+    if (a.type === 'circle' && b.type === 'circle') {
+      const d = Math.hypot(a.x - b.x, a.y - b.y);
+      if (d < tol) return 'con';
+      if (Math.abs(d - (a.r + b.r)) < tol || Math.abs(d - Math.abs(a.r - b.r)) < tol) return 'tan';
+      if (d < a.r + b.r && d > Math.abs(a.r - b.r)) return 'cross';
+      return null;
+    }
+    if ((a.type === 'radial' && (b.type === 'circle' || b.type === 'radial')) || (b.type === 'radial' && a.type === 'circle'))
+      return Math.hypot(a.x - b.x, a.y - b.y) < tol ? 'con' : null;
+    const lineCirc = (l, c) => {
+      const t = l.ang * Math.PI / 180, dist = Math.abs((c.x - l.x) * Math.sin(t) - (c.y - l.y) * Math.cos(t));
+      if (dist < tol) return 'thru';
+      if (Math.abs(dist - c.r) < tol) return 'tan';
+      return dist < c.r ? 'cross' : null;
+    };
+    if (a.type === 'line' && b.type === 'circle') return lineCirc(a, b);
+    if (b.type === 'line' && a.type === 'circle') return lineCirc(b, a);
+    if (a.type === 'line' && b.type === 'radial') return lineCirc(a, { x: b.x, y: b.y, r: -1e9 }) === 'thru' ? 'thru' : null;
+    if (b.type === 'line' && a.type === 'radial') return lineCirc(b, { x: a.x, y: a.y, r: -1e9 }) === 'thru' ? 'thru' : null;
+    return null;
+  }
+  function guideRels(gi) {
+    const out = {}; const g = D.doc.guides[gi]; if (!g) return out;
+    D.doc.guides.forEach((o, j) => { if (j !== gi) { const r = guideRel(g, o); if (r) out[j] = r; } });
+    return out;
+  }
+  function selectGuide(gi, scroll) {
+    D.gsel = (gi == null || D.gsel === gi) ? null : gi;
+    renderCanvas(); renderGuideList();
+    if (scroll && D.gsel != null) { const el = document.querySelector(`#guideList .li[data-gi="${D.gsel}"]`); if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+  }
+  $('gOnly').onchange = () => renderCanvas();
+  $('gTol').onchange = () => { const v = parseFloat($('gTol').value); if (v >= 0) D.gtol = fromU(v); renderCanvas(); renderGuideList(); };
+
   function renderGuides() {
     guideGeoms();
     const g = $('dguides'); g.textContent = '';
@@ -1644,8 +1710,14 @@ const Draw = (() => {
     const ext = SIZE * 4;
     const act = D.drag && D.drag.mode === 'guide' ? D.drag.gi : -1;
     const rc = 6 * px(), doneC = new Set();
+    if (D.gsel != null && !D.doc.guides[D.gsel]) D.gsel = null;
+    const rels = D.gsel != null ? guideRels(D.gsel) : null;
+    const gcls = gi => rels == null ? '' : gi === D.gsel ? ' gsel' : rels[gi] ? ' r-' + rels[gi] : ' dim';
+    const only = rels != null && $('gOnly').checked;
+    const shown = gi => !only || gi === D.gsel || rels[gi];
     for (const G of D.geoms) {
-      const on = G.gi === act ? ' on' : '';
+      if (!shown(G.gi)) continue;
+      const on = (G.gi === act ? ' on' : '') + gcls(G.gi);
       if (G.k === 'line') {
         const at = { x1: G.p[0] - G.d[0] * ext, y1: G.p[1] - G.d[1] * ext, x2: G.p[0] + G.d[0] * ext, y2: G.p[1] + G.d[1] * ext };
         ns('line', Object.assign({ class: 'gd' + on }, at), g);
@@ -1696,6 +1768,24 @@ const Draw = (() => {
         ns('path', { d: dm, class: 'gd', style: G.major > 0 ? 'stroke-dasharray:none;opacity:.95;stroke-width:1.8' : 'stroke-dasharray:none;opacity:.7' }, g);
       }
     }
+    // ガイドの番号
+    {
+      const q = px(), fs = 12 * q, v = D.vb;
+      D.doc.guides.forEach((gd, gi) => {
+        if (!gd.vis || gd.type === 'grid' || !shown(gi) || $('gHide').checked) return;
+        let x, y;
+        if (gd.type === 'circle') { const rr = gd.r + 9 * q; x = gd.x + rr * 0.7071 - 3 * q; y = gd.y - rr * 0.7071 + 4 * q; }
+        else if (gd.type === 'radial') { x = gd.x + 8 * q; y = gd.y - 8 * q; }
+        else {
+          // 直線：画面の中に入っている所（上のはしか左のはし）
+          const t = gd.ang * Math.PI / 180, dx = Math.cos(t), dy = Math.sin(t);
+          if (Math.abs(dy) > 1e-6) { const yy = v.y + 30 * q, tt = (yy - gd.y) / dy; x = gd.x + dx * tt + 4 * q; y = yy; }
+          else { x = v.x + 30 * q; y = gd.y - 4 * q; }
+        }
+        const cls = gcls(gi);
+        ns('text', { x, y, 'font-size': cls.includes('gsel') ? fs * 1.3 : fs, 'stroke-width': 3 * q, class: 'gno' + cls }, g).textContent = gi + 1;
+      });
+    }
     const r = 2.2 * px();
     for (const p of D.ipts) ns('circle', { cx: p[0], cy: p[1], r, class: 'gpt' }, g);
   }
@@ -1744,12 +1834,20 @@ const Draw = (() => {
       circle: [['x', '中心X'], ['y', 'Y'], ['r', '半径']],
       grid: [['s', '間隔'], ['major', '太線ごと'], ['x', 'ずらしX'], ['y', 'Y']]
     };
+    $('gTol').value = f3(toU(D.gtol));
+    if (D.gsel != null && !D.doc.guides[D.gsel]) D.gsel = null;
+    const rels = D.gsel != null ? guideRels(D.gsel) : {};
     D.doc.guides.forEach((g, gi) => {
-      const row = document.createElement('div'); row.className = 'li';
+      const row = document.createElement('div');
+      row.className = 'li' + (gi === D.gsel ? ' gon' : rels[gi] ? ' grel' : ''); row.dataset.gi = gi;
       const vis = document.createElement('input'); vis.type = 'checkbox'; vis.checked = g.vis; vis.title = '表示';
       vis.onchange = () => change(() => g.vis = vis.checked);
-      const nm = document.createElement('b'); nm.textContent = NAMES[g.type]; nm.style.minWidth = '30px';
-      row.append(vis, nm);
+      const no = document.createElement('button'); no.className = 'gbadge' + (gi === D.gsel ? '' : rels[gi] ? ' r-' + rels[gi] : ''); no.textContent = gi + 1;
+      no.title = 'クリックで選ぶ'; no.onclick = () => selectGuide(gi);
+      const nm = document.createElement('input'); nm.className = 'gname'; nm.value = g.name || ''; nm.placeholder = NAMES[g.type];
+      nm.onchange = () => change(() => g.name = nm.value.trim());
+      row.onclick = e => { if (e.target === row) selectGuide(gi); };
+      row.append(vis, no, nm);
       for (const [k, lab] of FIELDS[g.type]) {
         const l = document.createElement('span'); l.textContent = lab;
         // 何の数字か：位置X・位置Y・長さ・角度・そのまま
@@ -1774,8 +1872,31 @@ const Draw = (() => {
         row.append(l, inp);
       }
       const del = document.createElement('button'); del.className = 'ib'; del.textContent = '✕'; del.title = '消す';
-      del.onclick = () => change(() => D.doc.guides.splice(gi, 1));
+      del.onclick = () => { change(() => { D.doc.guides.splice(gi, 1); if (D.gsel === gi) D.gsel = null; else if (D.gsel > gi) D.gsel--; }); };
       row.append(del);
+      if (gi === D.gsel) {
+        // 関係の一覧
+        const rb = document.createElement('div'); rb.className = 'grel-box';
+        let any = false;
+        for (const k of ['tan', 'con', 'thru', 'cross']) {
+          const js = Object.keys(rels).filter(j => rels[j] === k).map(Number); if (!js.length) continue;
+          any = true;
+          const line = document.createElement('div'); const b = document.createElement('b'); b.textContent = REL_NAME[k] + '：'; line.append(b);
+          for (const j of js) { const bt = document.createElement('button'); bt.className = 'gbadge r-' + k; bt.textContent = j + 1; bt.title = (D.doc.guides[j].name || NAMES[D.doc.guides[j].type]) + ' を選ぶ'; bt.style.marginRight = '3px'; bt.onclick = () => selectGuide(j, true); line.append(bt); }
+          rb.append(line);
+        }
+        if (!any) rb.append('関係のあるガイドはないヨ（ズレの大きさを広げると見つかるかも）');
+        const tools = document.createElement('div'); tools.style.marginTop = '4px';
+        btn(tools, '仲間以外のガイドを消す', () => {
+          const keep = new Set([gi, ...Object.keys(rels).map(Number)]);
+          const n = D.doc.guides.length - keep.size; if (!n) return toast('消すガイドはないダカラ');
+          if (!confirm(n + '個のガイドを消す？（方眼も消えるヨ）')) return;
+          change(() => { const old = D.doc.guides; D.doc.guides = old.filter((x, j) => keep.has(j)); D.gsel = D.doc.guides.indexOf(old[gi]); });
+        });
+        btn(tools, '選ぶのをやめる', () => selectGuide(null));
+        rb.append(tools);
+        row.append(rb);
+      }
       box.append(row);
     });
   }
@@ -2569,6 +2690,7 @@ const Draw = (() => {
   window.addEventListener('mouseup', () => {
     const d = D.drag; if (!d) return;
     D.drag = null; D.snapMk = null; dv.classList.remove('drag');
+    if (d.mode === 'guide' && !d.moved) { selectGuide(d.gi, true); return; }
     if (d.mode === 'handle' || d.mode === 'guide' || (d.mode === 'seg' && d.moved)) { if (d.moved) { pushState(d.prev); if (d.mode === 'seg') D.sel = { li: d.li, kind: 'seg', loop: d.loop, i: d.i }; } renderAll(); return; }
     if (d.mode === 'pick' && d.moved) { if (d.ids) { pushState(d.prev); renderAll(); } return; }
     if (d.mode === 'band') { $('dsnap').textContent = ''; if (d.moved && d.p1) bandSelect(d.p0, d.p1); return; }
@@ -2590,6 +2712,7 @@ const Draw = (() => {
     if (tag === 'input' || tag === 'select' || tag === 'textarea') return;
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); return; }
+    if (e.key === 'Escape' && D.gsel != null) { selectGuide(null); return; }
     if (e.key === ' ') { e.preventDefault(); if (!D.space) { D.space = true; dv.classList.add('space'); } return; }
     if ((e.key === 'g' || e.key === 'G') && !e.ctrlKey && !e.metaKey && !e.altKey) { $('gFront').checked = !$('gFront').checked; renderCanvas(); toast($('gFront').checked ? 'ガイドを上に出したダカラ' : 'ガイドを下にかくしたダカラ'); return; }
     const s = D.sel; if (!s) return;
@@ -2718,11 +2841,14 @@ const Draw = (() => {
       D.doc.guides.push({ type: 'radial', vis: true, x: c[0], y: c[1], n: opts.sym.cnt, off: f2(opts.sym.th * 180 / Math.PI) });
     }
     if (opts.circles) {
-      const seen = [];
-      for (const L of res.loops) for (const p of L.prims) if ((p.type === 'O' || p.type === 'A') && p.r * s > 15) {
-        const c = T(p.c), r = p.r * s;
-        if (seen.some(q => Math.hypot(q.c[0] - c[0], q.c[1] - c[1]) < 2 && Math.abs(q.r - r) < 2)) continue;
-        seen.push({ c, r }); if (seen.length >= 12) break;
+      const all = [];
+      for (const L of res.loops) for (const p of L.prims) if ((p.type === 'O' || p.type === 'A') && p.r * s > 15) all.push({ c: T(p.c), r: p.r * s });
+      all.sort((a, b) => b.r - a.r);
+      const seen = [], N = Math.max(0, opts.circleN == null ? 8 : opts.circleN);
+      for (const q of all) {
+        if (seen.length >= N) break;
+        if (seen.some(o => Math.hypot(o.c[0] - q.c[0], o.c[1] - q.c[1]) < 3 && Math.abs(o.r - q.r) < 3)) continue;
+        seen.push(q);
       }
       for (const q of seen) D.doc.guides.push({ type: 'circle', vis: true, x: f2(q.c[0]), y: f2(q.c[1]), r: f2(q.r) });
     }
@@ -2845,7 +2971,7 @@ $('sendDraw').onclick = () => {
   let sym = null;
   if ($('sendGuides').checked && symActive()) { const s = symParams(); sym = { c: s.c, th: s.th, cnt: s.mirror ? 2 * s.n : s.n }; }
   Draw.receive(S.res, S.tol, S.w, S.h, {
-    sym, circles: $('sendGuides').checked,
+    sym, circles: $('sendGuides').checked, circleN: Math.round(+$('sendCircN').value || 0),
     under: $('sendUnder').checked ? (symActive() && S.symURL ? S.symURL : S.imgURL) : null
   });
   showTab('draw');
