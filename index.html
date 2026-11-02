@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>紋づくり v0.21</title>
+<title>紋づくり v0.23</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%238a2b1d'/><circle cx='32' cy='32' r='24.5' fill='none' stroke='%23fff' stroke-width='5'/><g fill='%23fff'><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%280 32 32%29'/><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%2890 32 32%29'/><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%28180 32 32%29'/><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%28270 32 32%29'/></g><circle cx='32' cy='32' r='3.4' fill='%238a2b1d'/></svg>">
 <style>
 :root{
@@ -142,6 +142,7 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
 .sseg{fill:none;stroke:var(--accent);stroke-width:2;vector-effect:non-scaling-stroke;pointer-events:none}
 .sseg.on{stroke-width:5}
 .nd{fill:#fff;stroke:var(--accent);stroke-width:1.5;vector-effect:non-scaling-stroke;cursor:move}
+.ndhit{fill:transparent;stroke:none;cursor:move}
 .nd.on{fill:var(--accent)}
 .hl{stroke:var(--accent);stroke-width:1;vector-effect:non-scaling-stroke;opacity:.6;pointer-events:none}
 .hd{fill:var(--accent);cursor:move}
@@ -169,7 +170,7 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
 </head>
 <body>
 <header>
-  <h1>紋づくり<small>v0.21</small></h1>
+  <h1>紋づくり<small>v0.23</small></h1>
   <div class="tabs">
     <button class="tab on" data-tab="trace">写す</button>
     <button class="tab" data-tab="draw">描く</button>
@@ -1653,6 +1654,8 @@ const Draw = (() => {
         const at = { class: 'nd' + (on ? ' on' : ''), 'data-h': 'node', 'data-loop': lp, 'data-i': i };
         if (nd.smooth) ns('circle', Object.assign({ cx: nd.x, cy: nd.y, r: R }, at), hg);
         else ns('rect', Object.assign({ x: nd.x - R, y: nd.y - R, width: 2 * R, height: 2 * R }, at), hg);
+        // 見えないけど大きめのつかむ所（角をつかみやすく）
+        ns('circle', { cx: nd.x, cy: nd.y, r: R * 2.4, class: 'ndhit', 'data-h': 'node', 'data-loop': lp, 'data-i': i }, hg);
       });
     });
   }
@@ -2459,7 +2462,12 @@ const Draw = (() => {
         // 線が通っていない区画は割らない（速くするため）
         if (!f.bounds.intersects(cut.bounds)) { next.push(f); continue; }
         // 線が交わっていなくても、区画の中にすっぽり入っている円は割る
-        if (!f.intersects(cut) && !f.contains(cut.interiorPoint)) { next.push(f); continue; }
+        // 線が交わっていなくても、区切りの線が区画の中を通っていれば割る（中心の点ではなく、線の上の点で調べる）
+        if (!f.intersects(cut)) {
+          const cp0 = cut.children ? cut.children[0] : cut, len = cp0.length;
+          const inside = [0, 0.25, 0.5, 0.75].some(t => f.contains(cp0.getPointAt(len * t)));
+          if (!inside) { next.push(f); continue; }
+        }
         const a = f.intersect(cut, { insert: false }), b = f.subtract(cut, { insert: false });
         if (ok(a)) next.push(a); if (ok(b)) next.push(b);
       }
@@ -3014,6 +3022,24 @@ const Draw = (() => {
       for (const o of own) {
         const q = [o[0] + dx, o[1] + dy];
         for (const t of tgt) { const dd = Math.hypot(t[0] - q[0], t[1] - q[1]); if (dd < bd) { bd = dd; best = [t[0] - q[0], t[1] - q[1], t]; } }
+      }
+      // 点に近いものがなければ、ガイドの線・円の上に乗せる
+      if (!best && $('snapOn').checked) {
+        let bl = thr;
+        for (const o of own) {
+          const q = [o[0] + dx, o[1] + dy];
+          for (const G of D.geoms) {
+            let pr = null;
+            if (G.k === 'line' || G.k === 'ray') {
+              let t = (q[0] - G.p[0]) * G.d[0] + (q[1] - G.p[1]) * G.d[1]; if (G.k === 'ray' && t < 0) continue;
+              pr = [G.p[0] + G.d[0] * t, G.p[1] + G.d[1] * t];
+            } else if (G.k === 'circle') {
+              const vx = q[0] - G.c[0], vy = q[1] - G.c[1], L = Math.hypot(vx, vy) || 1;
+              pr = [G.c[0] + vx / L * G.r, G.c[1] + vy / L * G.r];
+            }
+            if (pr) { const dd = Math.hypot(pr[0] - q[0], pr[1] - q[1]); if (dd < bl) { bl = dd; best = [pr[0] - q[0], pr[1] - q[1], pr]; } }
+          }
+        }
       }
       if (best) { dx += best[0]; dy += best[1]; D.snapMk = best[2]; }
       else if (grid) {
