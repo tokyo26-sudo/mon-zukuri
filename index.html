@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>紋づくり v0.20</title>
+<title>紋づくり v0.21</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%238a2b1d'/><circle cx='32' cy='32' r='24.5' fill='none' stroke='%23fff' stroke-width='5'/><g fill='%23fff'><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%280 32 32%29'/><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%2890 32 32%29'/><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%28180 32 32%29'/><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%28270 32 32%29'/></g><circle cx='32' cy='32' r='3.4' fill='%238a2b1d'/></svg>">
 <style>
 :root{
@@ -169,7 +169,7 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
 </head>
 <body>
 <header>
-  <h1>紋づくり<small>v0.20</small></h1>
+  <h1>紋づくり<small>v0.21</small></h1>
   <div class="tabs">
     <button class="tab on" data-tab="trace">写す</button>
     <button class="tab" data-tab="draw">描く</button>
@@ -367,7 +367,7 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
       <g id="dsnap"></g>
     </svg>
     <div class="empty" id="dempty"><b>まだ何もないダカラ</b><div>左の「＋円」などで部品を足すか、「写す」タブの「描くへ送る」で持ってきてネ</div></div>
-    <div class="hint">ホイール：拡大縮小　空いた所をドラッグ：移動　ダブルクリック：全体表示　Shift＋クリック：いくつも選ぶ　スペース＋ドラッグ：画面の移動　Ctrl+Z：戻す　Ctrl+S：保存</div>
+    <div class="hint">Delete：選んだ形・ガイドを消す　ホイール：拡大縮小　空いた所をドラッグ：移動　ダブルクリック：全体表示　Shift＋クリック：いくつも選ぶ　スペース＋ドラッグ：画面の移動　Ctrl+Z：戻す　Ctrl+S：保存</div>
   </section>
 </main>
 <div class="toast" id="toast"></div>
@@ -3243,7 +3243,7 @@ const Draw = (() => {
   window.addEventListener('mouseup', () => {
     const d = D.drag; if (!d) return;
     D.drag = null; D.snapMk = null; dv.classList.remove('drag');
-    if (d.mode === 'guide' && !d.moved) { selectGuide(d.gi, true); return; }
+    if (d.mode === 'guide' && !d.moved) { if (D.sel) { D.sel = null; D.msel.clear(); renderLayers(); renderXform(); renderInspector(); } selectGuide(d.gi, true); return; }
     if (d.mode === 'handle' || d.mode === 'guide' || (d.mode === 'seg' && d.moved)) { if (d.moved) { pushState(d.prev); if (d.mode === 'seg') D.sel = { li: d.li, kind: 'seg', loop: d.loop, i: d.i }; } renderAll(); return; }
     if (d.mode === 'bucket') { pushState(d.prev); renderAll(); return; }
     if (d.mode === 'lmove') { if (d.moved) pushState(d.prev); renderAll(); return; }
@@ -3273,6 +3273,32 @@ const Draw = (() => {
     if (e.key === 'Escape' && D.gsel != null) { selectGuide(null); return; }
     if (e.key === ' ') { e.preventDefault(); if (!D.space) { D.space = true; dv.classList.add('space'); } return; }
     if ((e.key === 'g' || e.key === 'G') && !e.ctrlKey && !e.metaKey && !e.altKey) { $('gFront').checked = !$('gFront').checked; renderCanvas(); toast($('gFront').checked ? 'ガイドを上に出したダカラ' : 'ガイドを下にかくしたダカラ'); return; }
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      const s0 = D.sel;
+      // 点を選んでいるときは、その点だけ消す（下のいつもの処理）
+      if (s0 && s0.kind !== 'node') {
+        e.preventDefault();
+        const ly0 = curLayer();
+        // 輪のように円が2つ以上あるレイヤーで円を1つ選んでいたら、その円だけ消す
+        if (s0.kind === 'circle' && ly0 && ly0.loops.length > 1) {
+          if (ly0.lock) return toast('ロック中ダカラ消せない');
+          change(() => { ly0.loops.splice(s0.loop, 1); D.sel = { li: s0.li, kind: 'layer' }; });
+          return toast('円を1つ消したダカラ');
+        }
+        const T = targets();
+        if (!T.length) return;
+        if (T.some(o => o.ly.lock)) return toast('ロック中のレイヤーがあるダカラ消せない');
+        const ids = new Set(T.map(o => o.ly.id));
+        change(() => { D.doc.layers = D.doc.layers.filter(l => !ids.has(l.id)); D.sel = null; D.msel.clear(); });
+        return toast(T.length > 1 ? T.length + '枚消したダカラ（Ctrl+Zで戻せる）' : '「' + T[0].ly.name + '」を消したダカラ（Ctrl+Zで戻せる）');
+      }
+      if (!s0 && D.gsel != null && D.doc.guides[D.gsel]) {
+        e.preventDefault();
+        const gi = D.gsel;
+        change(() => { D.doc.guides.splice(gi, 1); D.gsel = null; });
+        return toast('ガイドを消したダカラ（Ctrl+Zで戻せる）');
+      }
+    }
     const s = D.sel; if (!s) return;
     const ly = curLayer(); if (!ly || ly.lock) return;
     {
