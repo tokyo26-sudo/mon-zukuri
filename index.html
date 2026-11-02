@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>紋づくり v0.19</title>
+<title>紋づくり v0.20</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%238a2b1d'/><circle cx='32' cy='32' r='24.5' fill='none' stroke='%23fff' stroke-width='5'/><g fill='%23fff'><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%280 32 32%29'/><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%2890 32 32%29'/><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%28180 32 32%29'/><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%28270 32 32%29'/></g><circle cx='32' cy='32' r='3.4' fill='%238a2b1d'/></svg>">
 <style>
 :root{
@@ -103,6 +103,17 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
 .kindb.line{border-style:dashed}
 .kindb:hover{border-color:var(--accent)}
 .li .opsel{width:76px;padding:2px}
+.picons{display:flex;gap:6px;flex-wrap:wrap}
+.pic{width:46px;height:48px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;padding:0;font-size:10px}
+.pic svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linejoin:round}
+.pic:hover{border-color:var(--accent)}
+.pic.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--bg));color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 25%,transparent)}
+.segs{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg2{border:none;border-right:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:12px;padding:4px 8px;cursor:pointer}
+.seg2:last-child{border-right:none}
+.seg2.on{background:var(--accent);color:var(--accent-ink)}
+.lc{fill:#fff;stroke:var(--accent);stroke-width:2;vector-effect:non-scaling-stroke;cursor:move}
+.lcx{stroke:var(--accent);stroke-width:1.5;vector-effect:non-scaling-stroke;pointer-events:none}
 .glock .ghit,.glock .gctr{pointer-events:none}
 .gd.dim{opacity:.18}
 .gd.gsel{stroke:var(--accent);stroke-width:3;stroke-dasharray:none;opacity:1}
@@ -158,7 +169,7 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
 </head>
 <body>
 <header>
-  <h1>紋づくり<small>v0.19</small></h1>
+  <h1>紋づくり<small>v0.20</small></h1>
   <div class="tabs">
     <button class="tab on" data-tab="trace">写す</button>
     <button class="tab" data-tab="draw">描く</button>
@@ -271,10 +282,10 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
     <div class="note">長さの数字は全部この単位（角度は°）。単位や用紙を変えても形はそのまま、数字の見え方と書き出しの大きさが変わるヨ</div>
     </div></details>
     <details class="sec" open data-sec="draw-部品を足す"><summary><span class="ic">🧩</span><span class="tt">部品を足す<small>円・輪・四角・太線…</small></span></summary><div class="body">
-    <div class="kv">形 <select id="partType" style="width:auto">
-      <option value="circle">円</option><option value="ring">輪</option><option value="rect">四角</option>
-      <option value="poly">多角形</option><option value="bar">太線</option><option value="pts">点を並べる</option></select>
-      新しい部品は <select id="newOp" style="width:auto"><option value="line">線（しきり）</option><option value="add">塗り・足す</option><option value="sub">塗り・くり抜く</option></select></div>
+    <div class="picons" id="partIcons"><button class="pic on" data-t="circle" title="円（ダブルクリックですぐ追加）"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg><span>円</span></button><button class="pic" data-t="ring" title="輪（ダブルクリックですぐ追加）"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/></svg><span>輪</span></button><button class="pic" data-t="rect" title="四角（ダブルクリックですぐ追加）"><svg viewBox="0 0 24 24"><rect x="4.5" y="6" width="15" height="12"/></svg><span>四角</span></button><button class="pic" data-t="poly" title="多角形（ダブルクリックですぐ追加）"><svg viewBox="0 0 24 24"><path d="M12 3.5 19.4 7.75v8.5L12 20.5 4.6 16.25v-8.5Z"/></svg><span>多角形</span></button><button class="pic" data-t="bar" title="太線（ダブルクリックですぐ追加）"><svg viewBox="0 0 24 24"><path d="M5 18 19 6" stroke-width="5" stroke-linecap="round"/></svg><span>太線</span></button><button class="pic" data-t="pts" title="点を並べる（ダブルクリックですぐ追加）"><svg viewBox="0 0 24 24"><path d="M4 17 9 7l5 7 6-9"/><circle cx="4" cy="17" r="1.6" fill="currentColor"/><circle cx="9" cy="7" r="1.6" fill="currentColor"/><circle cx="14" cy="14" r="1.6" fill="currentColor"/><circle cx="20" cy="5" r="1.6" fill="currentColor"/></svg><span>点</span></button></div>
+    <div class="kv" style="margin-top:6px">新しい部品は <span class="segs" id="opBtns"><button class="seg2 on" data-op="line" title="線（しきり）：バケツの区切りになる下書きの線">✏️ 線</button><button class="seg2" data-op="add" title="塗り：そのまま書き出される形">⬛ 塗り</button><button class="seg2" data-op="sub" title="くり抜き：塗りに穴をあける形">◻️ くり抜き</button></span></div>
+    <select id="partType" hidden><option value="circle">円</option><option value="ring">輪</option><option value="rect">四角</option><option value="poly">多角形</option><option value="bar">太線</option><option value="pts">点を並べる</option></select>
+    <select id="newOp" hidden><option value="line">線</option><option value="add">塗り</option><option value="sub">くり抜き</option></select>
     <div id="partFields"></div>
     <button class="btn primary" id="partAdd">＋追加</button>
     <div class="note" id="partNote"></div>
@@ -1604,6 +1615,13 @@ const Draw = (() => {
     const s = D.sel; if (!s) return;
     const ly = D.doc.layers[s.li]; if (!ly || !ly.vis || ly.lock) return;
     const q = px(), R = 4.5 * q;
+    // 形のまん中のつまみ（つかむと形全体が動く）
+    if (ly.loops.length > 1 || ly.loops.some(L => !L.circle)) {
+      const T = targets(), c = boundsCenter(T.length ? T : [{ ly }]);
+      ns('line', { x1: c[0] - 2.2 * R, y1: c[1], x2: c[0] + 2.2 * R, y2: c[1], class: 'lcx' }, hg);
+      ns('line', { x1: c[0], y1: c[1] - 2.2 * R, x2: c[0], y2: c[1] + 2.2 * R, class: 'lcx' }, hg);
+      ns('circle', { cx: c[0], cy: c[1], r: R * 1.5, class: 'lc', 'data-h': 'lc' }, hg);
+    }
     ly.loops.forEach((L, lp) => {
       if (L.circle) {
         const c = L.circle.c, r = L.circle.r;
@@ -2058,6 +2076,12 @@ const Draw = (() => {
     if (s.kind === 'layer') {
       head.textContent = `「${ly.name}」${lock}：輪郭 ${ly.loops.length}本。線をクリックで区間、点をクリックで点を選ぶ`;
       box.append(head);
+      if (ly.loops.length) {
+        const cc = boundsCenter([{ ly }]), rc = kv(); rc.append('形の中心');
+        numX(rc, 'X', cc[0], v => { if (!ly.lock) change(() => moveLayer(ly, v - cc[0], 0)); });
+        numY(rc, 'Y', cc[1], v => { if (!ly.lock) change(() => moveLayer(ly, 0, v - cc[1])); });
+        box.append(rc);
+      }
       const r = kv(); r.append('全体を動かす');
       let dx = 0, dy = 0;
       numU(r, 'X', 0, v => dx = v); numField(r, 'Y', 0, v => dy = SY() * fromU(v), true);
@@ -2289,6 +2313,11 @@ const Draw = (() => {
     box.append(r);
   }
   $('partType').onchange = renderParts;
+  document.querySelectorAll('#partIcons .pic').forEach(b => {
+    b.onclick = () => { $('partType').value = b.dataset.t; document.querySelectorAll('#partIcons .pic').forEach(x => x.classList.toggle('on', x === b)); renderParts(); };
+    b.ondblclick = () => { b.onclick(); $('partAdd').click(); };
+  });
+  document.querySelectorAll('#opBtns .seg2').forEach(b => b.onclick = () => { $('newOp').value = b.dataset.op; document.querySelectorAll('#opBtns .seg2').forEach(x => x.classList.toggle('on', x === b)); });
   const rad = d => d * Math.PI / 180;
   const linesLoop = pts => ({ nodes: pts.map(p => ({ x: p[0], y: p[1], smooth: false })), segs: pts.map(() => ({ type: 'L' })) });
   function barLoop(p1, p2, t, cap) {
@@ -2902,6 +2931,12 @@ const Draw = (() => {
       renderCanvas(); drawHover(f, !fill); return;
     }
     if (D.space || e.button === 1) { e.preventDefault(); D.drag = Object.assign(base, { mode: 'pan', vb: Object.assign({}, D.vb), target: dv, nosel: true }); return; }
+    if (ds.h === 'lc' && D.sel) {
+      const T = targets();
+      if (T.some(o => o.ly.lock)) { toast('ロック中のレイヤーがあるダカラ'); return; }
+      D.drag = Object.assign(base, { mode: 'lmove', ids: T.map(o => o.ly.id), c0: boundsCenter(T) });
+      e.preventDefault(); return;
+    }
     if (ds.h === 'node' && D.sel && (e.shiftKey || e.ctrlKey || e.metaKey)) {
       const T = targets();
       if (T.some(o => o.ly.lock)) { toast('ロック中のレイヤーがあるダカラ'); return; }
@@ -3124,6 +3159,19 @@ const Draw = (() => {
     }
     if (d.mode === 'guide') { dragGuide(d, e); renderCanvas(); return; }
     if (d.mode === 'seg') { dragSeg(d, e); renderCanvas(); return; }
+    if (d.mode === 'lmove') {
+      const before = JSON.parse(d.prev).layers, m = toDoc(e);
+      const idx = d.ids.map(id => D.doc.layers.findIndex(l => l.id === id)).filter(i => i >= 0);
+      const raw = [d.c0[0] + m[0] - d.p0[0], d.c0[1] + m[1] - d.p0[1]];
+      let q = raw;
+      if (!d.alt) {
+        q = snap(raw, { layers: new Set(idx) });
+        // 原点・用紙のまん中にも吸いつく
+        if (!D.snapMk) for (const t of [O(), [SIZE / 2, SIZE / 2]]) if (Math.hypot(t[0] - raw[0], t[1] - raw[1]) < 10 * px()) { q = t.slice(); D.snapMk = t; break; }
+      }
+      idx.forEach(i => { D.doc.layers[i].loops = clone(before[i].loops); moveLayer(D.doc.layers[i], q[0] - d.c0[0], q[1] - d.c0[1]); });
+      renderCanvas(); return;
+    }
     if (d.mode === 'xf') {
       const before = JSON.parse(d.prev).layers, m = toDoc(e), c = d.c;
       const idx = d.ids.map(id => D.doc.layers.findIndex(l => l.id === id)).filter(i => i >= 0);
@@ -3198,6 +3246,7 @@ const Draw = (() => {
     if (d.mode === 'guide' && !d.moved) { selectGuide(d.gi, true); return; }
     if (d.mode === 'handle' || d.mode === 'guide' || (d.mode === 'seg' && d.moved)) { if (d.moved) { pushState(d.prev); if (d.mode === 'seg') D.sel = { li: d.li, kind: 'seg', loop: d.loop, i: d.i }; } renderAll(); return; }
     if (d.mode === 'bucket') { pushState(d.prev); renderAll(); return; }
+    if (d.mode === 'lmove') { if (d.moved) pushState(d.prev); renderAll(); return; }
     if (d.mode === 'xf') { if (d.moved) pushState(d.prev); $('dsnap').textContent = ''; renderAll(); return; }
     if (d.mode === 'pick' && d.moved) { if (d.ids) { pushState(d.prev); renderAll(); } return; }
     if (d.mode === 'band') { $('dsnap').textContent = ''; if (d.moved && d.p1) bandSelect(d.p0, d.p1); return; }
