@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>紋づくり v0.18</title>
+<title>紋づくり v0.19</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%238a2b1d'/><circle cx='32' cy='32' r='24.5' fill='none' stroke='%23fff' stroke-width='5'/><g fill='%23fff'><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%280 32 32%29'/><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%2890 32 32%29'/><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%28180 32 32%29'/><ellipse cx='32' cy='22.5' rx='5.2' ry='8.6' transform='rotate%28270 32 32%29'/></g><circle cx='32' cy='32' r='3.4' fill='%238a2b1d'/></svg>">
 <style>
 :root{
@@ -97,6 +97,12 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
 .hit[data-seg]{cursor:move}
 .fhit{fill:transparent;stroke:none;pointer-events:fill;cursor:move}
 .lo.ms{stroke:var(--accent);stroke-width:1.8;opacity:1}
+.lnp{fill:none;stroke:#202020;stroke-width:1.6;vector-effect:non-scaling-stroke;pointer-events:none}
+.lnp.ms{stroke:var(--accent);stroke-width:2.2}
+.kindb{border:1px solid var(--line);background:var(--panel);border-radius:5px;font-size:11px;padding:1px 5px;cursor:pointer;color:var(--ink);white-space:nowrap}
+.kindb.line{border-style:dashed}
+.kindb:hover{border-color:var(--accent)}
+.li .opsel{width:76px;padding:2px}
 .glock .ghit,.glock .gctr{pointer-events:none}
 .gd.dim{opacity:.18}
 .gd.gsel{stroke:var(--accent);stroke-width:3;stroke-dasharray:none;opacity:1}
@@ -134,7 +140,7 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
 .li{display:flex;align-items:center;gap:4px;padding:4px 6px;border:1px solid var(--line);border-radius:7px;font-size:12px;flex-wrap:wrap;background:var(--bg)}
 .li.on{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
 .li .nm{flex:1;min-width:60px;border:none;background:transparent;color:var(--ink);font-size:13px;padding:2px}
-.li select{width:76px;padding:2px}
+.li select{width:70px;padding:2px}
 .li .nm{min-width:40px}
 .ib{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:5px;padding:1px 6px;cursor:pointer;font-size:12px}
 .ib:hover{border-color:var(--accent)}
@@ -152,7 +158,7 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
 </head>
 <body>
 <header>
-  <h1>紋づくり<small>v0.18</small></h1>
+  <h1>紋づくり<small>v0.19</small></h1>
   <div class="tabs">
     <button class="tab on" data-tab="trace">写す</button>
     <button class="tab" data-tab="draw">描く</button>
@@ -268,7 +274,7 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
     <div class="kv">形 <select id="partType" style="width:auto">
       <option value="circle">円</option><option value="ring">輪</option><option value="rect">四角</option>
       <option value="poly">多角形</option><option value="bar">太線</option><option value="pts">点を並べる</option></select>
-      新しい部品は <select id="newOp" style="width:auto"><option value="add">足す</option><option value="sub">くり抜く</option></select></div>
+      新しい部品は <select id="newOp" style="width:auto"><option value="line">線（しきり）</option><option value="add">塗り・足す</option><option value="sub">塗り・くり抜く</option></select></div>
     <div id="partFields"></div>
     <button class="btn primary" id="partAdd">＋追加</button>
     <div class="note" id="partNote"></div>
@@ -307,9 +313,11 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
     <details class="sec" open data-sec="draw-バケツ"><summary><span class="ic">🪣</span><span class="tt">割付バケツ<small>ガイドで区切られた所を塗る</small></span></summary><div class="body">
     <button class="btn primary" id="bkOn">🪣 バケツで塗る（Bキー）</button>
     <div class="note" id="bkInfo">ガイドの線と円で区切られた「区画」をクリックで塗る・もう一回で消す。ドラッグでなぞると続けて塗れるヨ</div>
-    <label class="chk"><input type="checkbox" id="bkRadial" checked>放射の線も区切りに使う</label>
-    <label class="chk"><input type="checkbox" id="bkGrid">方眼も区切りに使う（マスが多いと重い）</label>
-    <div class="note">塗る先：選んでいるレイヤー。選んでないときは新しく「塗り」レイヤーを作るダカラ</div>
+    <div class="note">区切りになるのは<b>線の部品</b>（細い黒い線）。円・四角・六角形…を「線」で置いて、線で囲まれた所を塗るヨ</div>
+    <label class="chk"><input type="checkbox" id="bkGuides">ガイドも区切りに使う</label>
+    <label class="chk" style="margin-left:18px"><input type="checkbox" id="bkRadial" checked>放射の線も</label>
+    <label class="chk" style="margin-left:18px"><input type="checkbox" id="bkGrid">方眼も（マスが多いと重い）</label>
+    <div class="note">塗る先：選んでいる「塗り」レイヤー。線のレイヤーを選んでいるときや、何も選んでないときは「塗り」レイヤーに塗るダカラ</div>
     </div></details>
     <details class="sec" open data-sec="draw-下絵"><summary><span class="ic">🗺️</span><span class="tt">下絵<small>なぞる元の画像</small></span></summary><div class="body">
     <label class="chk"><input type="checkbox" id="uShow" checked>下絵を表示</label>
@@ -330,6 +338,8 @@ select{padding:5px;border-radius:6px;border:1px solid var(--line);background:var
     <button class="btn" id="dPng">PNG保存</button>
     <button class="btn" id="dCopy">パス(d)をコピー</button>
     <label class="chk"><input type="checkbox" id="dPngTrans">PNGの背景を透明に</label>
+    <label class="chk"><input type="checkbox" id="dLines">線の部品も線画としていっしょに書き出す</label>
+    <div class="note">書き出されるのは「塗り」。線の部品は下書きの線なので、ふつうは入らないヨ</div>
     <div class="note" id="dExpNote"></div>
     </div></details>
   </aside>
@@ -1448,6 +1458,9 @@ const Draw = (() => {
   const iX = v => O()[0] + fromU(v), iY = v => O()[1] + SY() * fromU(v);
   const dA = a => SY() < 0 ? -a : a;   // 見せる角度 ⇔ 中の角度（同じ式で行き来できる）
 
+  const isLine = ly => ly && ly.kind === 'line';
+  const fillLayers = () => D.doc.layers.filter(l => !isLine(l));
+
   // ---------- 履歴 ----------
   function commit() {
     D.hist.push(JSON.stringify(D.doc)); if (D.hist.length > 120) D.hist.shift();
@@ -1546,18 +1559,22 @@ const Draw = (() => {
     } else ui.style.display = 'none';
     // 塗り（マスクで足す・くり抜くを順番に）
     const mg = $('dmaskG'); mg.textContent = '';
-    D.doc.layers.forEach(ly => { if (ly.vis) ns('path', { d: layerD(ly), fill: ly.op === 'sub' ? '#000' : '#fff', 'fill-rule': 'evenodd' }, mg); });
+    D.doc.layers.forEach(ly => { if (ly.vis && !isLine(ly)) ns('path', { d: layerD(ly), fill: ly.op === 'sub' ? '#000' : '#fff', 'fill-rule': 'evenodd' }, mg); });
     renderGuides();
     // 輪郭
     const og = $('dout'); og.textContent = '';
     const s = D.sel;
     // 塗りをつかめるように（ロック中はつかめない）
-    D.doc.layers.forEach((ly, li) => { if (ly.vis && !ly.lock) ns('path', { d: layerD(ly), class: 'fhit', 'fill-rule': 'evenodd', 'data-layer': li }, og); });
-    D.doc.layers.forEach((ly, li) => {
+    D.doc.layers.forEach((ly, li) => { if (ly.vis && !ly.lock && !isLine(ly)) ns('path', { d: layerD(ly), class: 'fhit', 'fill-rule': 'evenodd', 'data-layer': li }, og); });
+    // 線の部品は、いつも細い黒い線で見せる
+    D.doc.layers.forEach(ly => { if (ly.vis && isLine(ly)) ns('path', { d: layerD(ly), class: 'lnp' + (D.msel.has(ly.id) ? ' ms' : '') }, og); });
+    const order = D.doc.layers.map((ly, li) => li).sort((a, b) => (isLine(D.doc.layers[a]) ? 1 : 0) - (isLine(D.doc.layers[b]) ? 1 : 0));
+    order.forEach(li => {
+      const ly = D.doc.layers[li];
       if (!ly.vis) return;
       const d = layerD(ly);
       if (!s || s.li !== li) {
-        ns('path', { d, class: 'lo' + (D.msel.has(ly.id) ? ' ms' : '') }, og);
+        if (!isLine(ly)) ns('path', { d, class: 'lo' + (D.msel.has(ly.id) ? ' ms' : '') }, og);
         ns('path', { d, class: 'hit', 'data-layer': li }, og);
       }
     });
@@ -1981,7 +1998,10 @@ const Draw = (() => {
       nm.onmousedown = e => { if (e.shiftKey || e.ctrlKey || e.metaKey) e.preventDefault(); };
       nm.onfocus = () => { if (D.sel && D.sel.li === li) return; D.msel.clear(); select({ li, kind: 'layer' }, true); row.classList.add('on'); renderXform(); };
       nm.onchange = () => change(() => ly.name = nm.value);
-      const op = document.createElement('select');
+      const kb = document.createElement('button'); kb.className = 'kindb' + (isLine(ly) ? ' line' : '');
+      kb.textContent = isLine(ly) ? '✏️ 線' : '⬛ 塗り'; kb.title = 'クリックで「線」と「塗り」を切り替え';
+      kb.onclick = () => change(() => { if (isLine(ly)) { delete ly.kind; } else { ly.kind = 'line'; } });
+      const op = document.createElement('select'); op.className = 'opsel';
       op.innerHTML = '<option value="add">足す</option><option value="sub">くり抜く</option>'; op.value = ly.op;
       op.onchange = () => change(() => ly.op = op.value);
       const lock = document.createElement('button'); lock.className = 'ib'; lock.textContent = ly.lock ? '🔒' : '🔓'; lock.title = 'ロック';
@@ -2004,7 +2024,8 @@ const Draw = (() => {
         }
         if (e.target === row) { D.msel.clear(); select({ li, kind: 'layer' }); }
       };
-      row.append(vis, nm, op, lock, up, dn, dup, del);
+      if (isLine(ly)) op.style.display = 'none';
+      row.append(vis, nm, kb, op, lock, up, dn, dup, del);
       box.append(row);
     }
     if (!L.length) box.innerHTML = '<div class="note">まだレイヤーなし</div>';
@@ -2212,7 +2233,10 @@ const Draw = (() => {
 
   // ---------- 部品 ----------
   function addLayer(name, loops, op) {
-    change(() => { D.doc.layers.push({ id: uid(), name, op: op || $('newOp').value, vis: true, lock: false, loops }); D.sel = { li: D.doc.layers.length - 1, kind: 'layer' }; D.msel.clear(); });
+    const mode = op || $('newOp').value;
+    const ly = { id: uid(), name, op: mode === 'sub' ? 'sub' : 'add', vis: true, lock: false, loops };
+    if (mode === 'line') ly.kind = 'line';
+    change(() => { D.doc.layers.push(ly); D.sel = { li: D.doc.layers.length - 1, kind: 'layer' }; D.msel.clear(); });
   }
   // 部品の数字（中の座標で持つ。角度は見せる角度のまま）
   const PS = { cx: SIZE / 2, cy: SIZE / 2, r: 200, r2: 150, w: 400, h: 200, ang: 0, n: 6, x1: 300, y1: 500, x2: 700, y2: 500, r1: 100, t: 40, cap: 'butt', bmode: 'ang', pts: '' };
@@ -2325,6 +2349,16 @@ const Draw = (() => {
       }
     }
   }
+  function scaleLayer(ly, c, s) {
+    const f = p => [c[0] + (p[0] - c[0]) * s, c[1] + (p[1] - c[1]) * s];
+    for (const L of ly.loops) {
+      if (L.circle) { L.circle.c = f(L.circle.c); L.circle.r *= s; continue; }
+      L.nodes.forEach(n => { const q = f([n.x, n.y]); n.x = q[0]; n.y = q[1]; });
+      for (const sg of L.segs) { if (sg.type === 'A') { sg.c = f(sg.c); sg.r *= s; } if (sg.type === 'B') { sg.c1 = f(sg.c1); sg.c2 = f(sg.c2); } }
+    }
+  }
+  D.tcMode = 'shape'; D.xscale = 100;
+  function tCenter(T) { return D.tcMode === 'shape' ? boundsCenter(T) : xCenter(); }
   const rotF = (c, a) => p => { const x = p[0] - c[0], y = p[1] - c[1], ca = Math.cos(a), sa = Math.sin(a); return [c[0] + ca * x - sa * y, c[1] + sa * x + ca * y]; };
   const flipH = c => p => [2 * c[0] - p[0], p[1]], flipV = c => p => [p[0], 2 * c[1] - p[1]];
   function xformDo(kind) {
@@ -2334,6 +2368,7 @@ const Draw = (() => {
     change(() => {
       const L = D.doc.layers, last = Math.max(...T.map(o => o.i));
       if (kind === 'rot') T.forEach(o => applyT(o.ly, rotF(c, rad(dA(D.xang))), false));
+      if (kind === 'scale') T.forEach(o => scaleLayer(o.ly, c, D.xscale / 100));
       if (kind === 'fh') T.forEach(o => applyT(o.ly, flipH(c), true));
       if (kind === 'fv') T.forEach(o => applyT(o.ly, flipV(c), true));
       let copies = [];
@@ -2346,15 +2381,24 @@ const Draw = (() => {
   // ---------- 割付バケツ ----------
   D.bucket = false; D.faces = null;
   function visGuidesForFaces() {
+    if (!$('bkGuides').checked) return [];
     return D.doc.guides.filter(g => g.vis && !$('gHide').checked).filter(g => g.type !== 'grid' || $('bkGrid').checked).filter(g => g.type !== 'radial' || $('bkRadial').checked);
   }
   function buildFaces() {
     if (!paperReady()) { toast('合成の部品が読めなかったダカラ'); return []; }
-    const gs = visGuidesForFaces(), key = JSON.stringify(gs.map(g => [g.type, g.x, g.y, g.r, g.ang, g.n, g.off, g.s]));
+    const gs = visGuidesForFaces(), lines = D.doc.layers.filter(l => l.vis && isLine(l) && l.loops.length);
+    const key = JSON.stringify([gs.map(g => [g.type, g.x, g.y, g.r, g.ang, g.n, g.off, g.s]), lines.map(l => layerD(l))]);
     if (D.faces && D.faces.key === key) return D.faces.list;
     const t0 = performance.now(), B = SIZE * 4;
     const P = (pts) => new pp.Path({ segments: pts, closed: true, insert: false });
     const cutters = [];
+    // 線の部品：輪郭1本ずつを区切りにする
+    for (const ly of lines) for (const L of ly.loops) {
+      if (L.circle) { if (L.circle.r > 0.5) cutters.push(new pp.Path.Circle({ center: L.circle.c, radius: L.circle.r, insert: false })); continue; }
+      const it = new pp.CompoundPath({ pathData: loopD(L), insert: false });
+      const pth = it.children && it.children.length ? it.children[0].clone({ insert: false }) : null;
+      if (pth && Math.abs(pth.area) > 0.5) cutters.push(pth);
+    }
     for (const g of gs) {
       if (g.type === 'circle' && g.r > 0.5) cutters.push(new pp.Path.Circle({ center: [g.x, g.y], radius: g.r, insert: false }));
       if (g.type === 'line') {
@@ -2393,24 +2437,87 @@ const Draw = (() => {
       faces = next;
       if (faces.length > 3000) { toast('区画が多すぎるダカラ、途中で止めたヨ'); break; }
     }
-    // 1つの区画がバラバラの島になってたら分ける（入れ子の深さで、外わくと穴を見分ける）
+    // 1本の輪郭が「角でふれて」8の字になっていたら、ふれている所で別々の輪に分ける
+    const splitTouch = pth => {
+      const S = pth.segments.map(sg => ({ p: sg.point.clone(), hi: sg.handleIn.clone(), ho: sg.handleOut.clone() }));
+      const out = [], st = [];
+      const same = (a, b) => Math.abs(a.x - b.x) < 1e-4 && Math.abs(a.y - b.y) < 1e-4;
+      for (const sg of S) {
+        const j = st.findIndex(x => same(x.p, sg.p));
+        if (j >= 0) {
+          const loop = st.slice(j).map(x => ({ p: x.p, hi: x.hi, ho: x.ho }));
+          loop[0] = { p: loop[0].p, hi: sg.hi, ho: loop[0].ho };
+          out.push(loop);
+          st.length = j + 1; st[j] = { p: st[j].p, hi: st[j].hi, ho: sg.ho };
+        } else st.push(sg);
+      }
+      if (st.length > 1) out.push(st);
+      return out.filter(l => l.length >= 2).map(l => new pp.Path({ segments: l.map(x => new pp.Segment(x.p, x.hi, x.ho)), closed: true, insert: false })).filter(q => Math.abs(q.area) > 0.5);
+    };
+    // 穴が外わくに2か所以上ふれていたら、ふれている点で切って別々の区画にする
+    const piece = (path, A, B) => {   // path の上を A から B まで進む部分（開いた線）を2通り返す
+      const c = path.clone({ insert: false });
+      const la = c.getNearestLocation(A); c.splitAt(la);
+      const lb = c.getNearestLocation(B); const rest = c.splitAt(lb);
+      return [c, rest];   // c: A→B, rest: B→A
+    };
+    const splitByTouch = (o, holes) => {
+      for (let hi = 0; hi < holes.length; hi++) {
+        const H = holes[hi];
+        // 接点：交点の計算＋「穴の角が外わくの上にある」「外わくの角が穴の上にある」
+        // 円はベジェで近似されているので、少しゆるめに「ふれている」とみなす
+        const tolT = Math.max(0.05, 3e-4 * Math.max(o.bounds.width, o.bounds.height));
+        // 先に入れた点が「本物」になる：穴の角 → 外わくの角 → 交点 の順
+        const raw = [];
+        for (const sg of H.segments) if (o.getNearestPoint(sg.point).getDistance(sg.point) < tolT) raw.push(sg.point);
+        for (const sg of o.segments) if (H.getNearestPoint(sg.point).getDistance(sg.point) < tolT) raw.push(sg.point);
+        raw.push(...o.getIntersections(H).map(x => x.point));
+        const T = [];
+        for (const q of raw) if (!T.some(t => t.getDistance(q) < tolT * 2)) T.push(q);
+        if (T.length < 2) continue;
+        T.sort((a, b) => o.getNearestLocation(a).offset - o.getNearestLocation(b).offset);
+        const out = [], others = holes.filter((x, j) => j !== hi);
+        for (let i = 0; i < T.length; i++) {
+          const A = T[i], B = T[(i + 1) % T.length];
+          const op = piece(o, A, B)[0];
+          const [h1, h2] = piece(H, A, B);
+          // ほかの接点を通らない方の穴の線を使う
+          const inner = (pp2) => T.some(t => t !== A && t !== B && pp2.getNearestPoint(t).getDistance(t) < tolT && t.getDistance(pp2.firstSegment.point) > tolT * 2 && t.getDistance(pp2.lastSegment.point) > tolT * 2);
+          let hp = !inner(h1) ? h1 : h2;
+          if (hp === h1) hp.reverse();   // B→A の向きにする
+          const loop = op.clone({ insert: false });
+          // 両はしを接点そのものにそろえる（となりの区画とピッタリ同じ座標にするため）
+          loop.firstSegment.point = A.clone(); loop.lastSegment.point = B.clone();
+          const hq = hp.clone({ insert: false }); hq.firstSegment.point = B.clone(); hq.lastSegment.point = A.clone();
+          loop.join(hq, tolT * 3);
+          loop.closed = true;
+          if (Math.abs(loop.area) > 0.5) out.push(loop);
+        }
+        // 残りの穴を、入っている区画に振り分ける
+        const res = [];
+        for (const pc of out) {
+          const hs = others.filter(x => pc.contains(x.interiorPoint));
+          res.push(...splitByTouch(pc, hs));
+        }
+        return res;
+      }
+      if (!holes.length) return [o];
+      const cp = new pp.CompoundPath({ children: [o, ...holes], insert: false }); cp.fillRule = 'evenodd';
+      return [cp];
+    };
+    // バラバラの島を別々の区画に（入れ子の深さで、外わくと穴を見分ける）
     const list = [];
     for (const f of faces) {
-      const kids = f.children ? f.children.slice() : [f];
-      if (kids.length > 1) {
-        const depth = kids.map(c => kids.filter(o => o !== c && Math.abs(o.area) > Math.abs(c.area) && o.contains(c.interiorPoint)).length);
-        const outers = kids.map((c, i) => i).filter(i => depth[i] % 2 === 0);
-        if (outers.length > 1) {
-          for (const oi of outers) {
-            const o = kids[oi];
-            const holes = kids.filter((c, j) => depth[j] === depth[oi] + 1 && o.contains(c.interiorPoint));
-            const cp = new pp.CompoundPath({ children: [o.clone({ insert: false }), ...holes.map(x => x.clone({ insert: false }))], insert: false }); cp.fillRule = 'evenodd';
-            if (ok(cp)) list.push(cp);
-          }
-          continue;
-        }
-      }
-      list.push(f);
+      const kids = [];
+      for (const c of (f.children ? f.children : [f])) kids.push(...splitTouch(c));
+      if (!kids.length) continue;
+      if (kids.length === 1) { list.push(kids[0]); continue; }
+      const depth = kids.map(c => kids.filter(o => o !== c && Math.abs(o.area) > Math.abs(c.area) && o.contains(c.interiorPoint)).length);
+      kids.forEach((o, oi) => {
+        if (depth[oi] % 2) return;
+        const holes = kids.filter((c, j) => depth[j] === depth[oi] + 1 && o.contains(c.interiorPoint));
+        for (const item of splitByTouch(o, holes)) if (ok(item)) list.push(item);
+      });
     }
     D.faces = { key, list };
     $('bkInfo').textContent = `区画 ${list.length}個（${Math.round(performance.now() - t0)}ms）。クリックで塗る・もう一回で消す。ドラッグでなぞると続けて塗れるヨ`;
@@ -2425,11 +2532,14 @@ const Draw = (() => {
   function layerItem(ly) { const cp = new pp.CompoundPath({ pathData: layerD(ly), insert: false }); cp.fillRule = 'evenodd'; return cp; }
   function bucketTarget(create) {
     const ly = curLayer();
-    if (ly && !ly.lock && ly.vis) return ly;
+    if (ly && !ly.lock && ly.vis && !isLine(ly)) { D.bkLast = ly.id; return ly; }
+    // 線を選んでいる・何も選んでいない → 前に塗った「塗り」レイヤー
+    const last = D.doc.layers.find(l => l.id === D.bkLast && !isLine(l) && l.vis && !l.lock);
+    if (last) return last;
     if (!create) return null;
-    D.doc.layers.push({ id: uid(), name: '塗り', op: 'add', vis: true, lock: false, loops: [] });
-    D.sel = { li: D.doc.layers.length - 1, kind: 'layer' }; D.msel.clear();
-    return D.doc.layers[D.doc.layers.length - 1];
+    const nl = { id: uid(), name: '塗り', op: 'add', vis: true, lock: false, loops: [] };
+    D.doc.layers.push(nl); D.bkLast = nl.id;
+    return nl;
   }
   // 塗った区画の番号を覚える（区画どうしはズレがないので、毎回区画から合体し直すときれい）
   function bkState(ly) {
@@ -2467,6 +2577,10 @@ const Draw = (() => {
   // 円弧・直線を、ガイドの円と線にピッタリ合わせる（ベジェの近似を本物の円弧に戻す）
   function snapToGuides(loops) {
     const circles = D.doc.guides.filter(g => g.type === 'circle' && g.vis).map(g => ({ c: [g.x, g.y], r: g.r }));
+    for (const ly of D.doc.layers) if (isLine(ly) && ly.vis) for (const L of ly.loops) {
+      if (L.circle) circles.push({ c: L.circle.c.slice(), r: L.circle.r });
+      else for (const s of L.segs) if (s.type === 'A') circles.push({ c: s.c.slice(), r: s.r });
+    }
     const onC = (q, C, tol) => Math.abs(Math.hypot(q[0] - C.c[0], q[1] - C.c[1]) - C.r) < tol;
     for (const L of loops) {
       if (L.circle) { for (const C of circles) if (Math.hypot(L.circle.c[0] - C.c[0], L.circle.c[1] - C.c[1]) < 0.3 && Math.abs(L.circle.r - C.r) < 0.3) L.circle = { c: C.c.slice(), r: C.r }; continue; }
@@ -2599,7 +2713,7 @@ const Draw = (() => {
     if (on) { buildFaces(); toast('バケツモード：区画をクリックで塗るダカラ'); }
   }
   $('bkOn').onclick = () => setBucket(!D.bucket);
-  $('bkGrid').onchange = $('bkRadial').onchange = () => { D.faces = null; if (D.bucket) buildFaces(); };
+  $('bkGrid').onchange = $('bkRadial').onchange = $('bkGuides').onchange = () => { D.faces = null; if (D.bucket) buildFaces(); };
   function drawHover(face, erase) {
     const g = $('dsnap'); g.textContent = '';
     if (face) ns('path', { d: face.pathData, class: 'bhov' + (erase ? ' erase' : ''), 'fill-rule': 'evenodd' }, g);
@@ -2679,6 +2793,17 @@ const Draw = (() => {
     numField(r2, '角度°', D.xang, v => D.xang = v);
     btn(r2, '回す', () => xformDo('rot'));
     box.append(r2);
+    const r2b = kv();
+    numField(r2b, '大きさ', D.xscale, v => D.xscale = Math.max(1, v));
+    r2b.append('%'); btn(r2b, '変える', () => { if (D.xscale === 100) return toast('100%だと変わらないダカラ'); xformDo('scale'); });
+    box.append(r2b);
+    const r2c = kv(); r2c.append('ドラッグ・キーで回す／大きくする中心 ');
+    const tc = document.createElement('select'); tc.style.width = 'auto';
+    tc.innerHTML = '<option value="shape">形の中心</option><option value="field">上の「中心」</option>'; tc.value = D.tcMode;
+    tc.onchange = () => D.tcMode = tc.value; r2c.append(tc); box.append(r2c);
+    const tip = document.createElement('div'); tip.className = 'note';
+    tip.innerHTML = '点を <b>Shift＋ドラッグ</b>：大きく・小さく　<b>⌘/Ctrl＋ドラッグ</b>：回す（＋Shiftで15°ずつ）<br>キー <b>[ ]</b>：少し回す（Shiftで15°）　<b>－ ＋</b>：少し大きさを変える（Shiftで10%）';
+    box.append(tip);
     const r3 = kv();
     btn(r3, '左右に裏返す', () => xformDo('fh')); btn(r3, '上下に裏返す', () => xformDo('fv'));
     box.append(r3);
@@ -2759,6 +2884,7 @@ const Draw = (() => {
     D.vb = { x: px0 - (px0 - D.vb.x) * f, y: py0 - (py0 - D.vb.y) * f, w: D.vb.w * f, h: D.vb.h * f }; setVB();
     clearTimeout(dv.t); dv.t = setTimeout(renderCanvas, 120);
   }, { passive: false });
+  dv.addEventListener('contextmenu', e => e.preventDefault());
   dv.addEventListener('dblclick', e => { if (!e.target.dataset.h) fit(); });
 
   dv.addEventListener('mousedown', e => {
@@ -2776,6 +2902,15 @@ const Draw = (() => {
       renderCanvas(); drawHover(f, !fill); return;
     }
     if (D.space || e.button === 1) { e.preventDefault(); D.drag = Object.assign(base, { mode: 'pan', vb: Object.assign({}, D.vb), target: dv, nosel: true }); return; }
+    if (ds.h === 'node' && D.sel && (e.shiftKey || e.ctrlKey || e.metaKey)) {
+      const T = targets();
+      if (T.some(o => o.ly.lock)) { toast('ロック中のレイヤーがあるダカラ'); return; }
+      const L = D.doc.layers[D.sel.li].loops[+ds.loop], nd = L.nodes[+ds.i];
+      const c = tCenter(T), n0 = [nd.x, nd.y];
+      if (Math.hypot(n0[0] - c[0], n0[1] - c[1]) < 1e-6) { toast('中心の点では回したり大きくしたりできないダカラ'); return; }
+      D.drag = Object.assign(base, { mode: 'xf', xk: (e.ctrlKey || e.metaKey) ? 'rot' : 'scale', ids: T.map(o => o.ly.id), c, n0, node: { li: D.sel.li, loop: +ds.loop, i: +ds.i } });
+      e.preventDefault(); return;
+    }
     if (ds.h && D.sel) {
       const li = D.sel.li, ly = D.doc.layers[li], lp = +ds.loop, L = ly.loops[lp];
       const d = Object.assign(base, { mode: 'handle', h: ds.h, li, loop: lp, i: +ds.i });
@@ -2989,6 +3124,31 @@ const Draw = (() => {
     }
     if (d.mode === 'guide') { dragGuide(d, e); renderCanvas(); return; }
     if (d.mode === 'seg') { dragSeg(d, e); renderCanvas(); return; }
+    if (d.mode === 'xf') {
+      const before = JSON.parse(d.prev).layers, m = toDoc(e), c = d.c;
+      const idx = d.ids.map(id => D.doc.layers.findIndex(l => l.id === id)).filter(i => i >= 0);
+      idx.forEach(i => D.doc.layers[i].loops = clone(before[i].loops));
+      D.snapMk = null;
+      const g = $('dsnap');
+      let label = '';
+      if (d.xk === 'scale') {
+        const q = d.alt ? m : snap(m, { layers: new Set(idx) });
+        const v = [d.n0[0] - c[0], d.n0[1] - c[1]], s = Math.max(0.01, ((q[0] - c[0]) * v[0] + (q[1] - c[1]) * v[1]) / (v[0] * v[0] + v[1] * v[1]));
+        idx.forEach(i => scaleLayer(D.doc.layers[i], c, s));
+        label = f2(s * 100) + '%';
+      } else {
+        let a = Math.atan2(m[1] - c[1], m[0] - c[0]) - Math.atan2(d.n0[1] - c[1], d.n0[0] - c[0]);
+        a = Math.atan2(Math.sin(a), Math.cos(a));
+        if (e.shiftKey) a = Math.round(a / (Math.PI / 12)) * (Math.PI / 12);
+        idx.forEach(i => applyT(D.doc.layers[i], rotF(c, a), false));
+        label = f2(dA(a * 180 / Math.PI)) + '°';
+      }
+      renderCanvas();
+      const q = px();
+      ns('circle', { cx: c[0], cy: c[1], r: 5 * q, class: 'snapmk' }, g);
+      ns('text', { x: m[0] + 12 * q, y: m[1] - 10 * q, 'font-size': 13 * q, 'stroke-width': 3 * q, class: 'glab' }, g).textContent = label;
+      return;
+    }
     if (d.mode === 'bucket') {
       const f = faceAt(toDoc(e)); if (!f || d.done.has(f)) return;
       d.done.add(f);
@@ -3038,6 +3198,7 @@ const Draw = (() => {
     if (d.mode === 'guide' && !d.moved) { selectGuide(d.gi, true); return; }
     if (d.mode === 'handle' || d.mode === 'guide' || (d.mode === 'seg' && d.moved)) { if (d.moved) { pushState(d.prev); if (d.mode === 'seg') D.sel = { li: d.li, kind: 'seg', loop: d.loop, i: d.i }; } renderAll(); return; }
     if (d.mode === 'bucket') { pushState(d.prev); renderAll(); return; }
+    if (d.mode === 'xf') { if (d.moved) pushState(d.prev); $('dsnap').textContent = ''; renderAll(); return; }
     if (d.mode === 'pick' && d.moved) { if (d.ids) { pushState(d.prev); renderAll(); } return; }
     if (d.mode === 'band') { $('dsnap').textContent = ''; if (d.moved && d.p1) bandSelect(d.p0, d.p1); return; }
     if (d.moved || d.nosel) { renderCanvas(); return; }
@@ -3065,6 +3226,25 @@ const Draw = (() => {
     if ((e.key === 'g' || e.key === 'G') && !e.ctrlKey && !e.metaKey && !e.altKey) { $('gFront').checked = !$('gFront').checked; renderCanvas(); toast($('gFront').checked ? 'ガイドを上に出したダカラ' : 'ガイドを下にかくしたダカラ'); return; }
     const s = D.sel; if (!s) return;
     const ly = curLayer(); if (!ly || ly.lock) return;
+    {
+      // [ ] で回す、－ ＋ で大きさ（選んでいるレイヤー全部、形の中心で）
+      let rk = 0, sk = 0;
+      if (e.key === '[' || e.key === '{') rk = -1; else if (e.key === ']' || e.key === '}') rk = 1;
+      else if (e.code === 'Minus' || e.code === 'NumpadSubtract') sk = -1;
+      else if (e.code === 'Equal' || e.code === 'Semicolon' || e.code === 'NumpadAdd' || e.key === '+') sk = 1;
+      if ((rk || sk) && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        const T = targets(); if (T.some(o => o.ly.lock)) return toast('ロック中のレイヤーがあるダカラ');
+        const c = tCenter(T), key = JSON.stringify(['xf', T.map(o => o.ly.id)]), now = Date.now();
+        const merge = D.nudgeKey === key && now - D.nudgeT < 900, prev = merge ? null : snapshotBefore();
+        if (rk) { const a = rk * (e.shiftKey ? 15 : 1) * Math.PI / 180; T.forEach(o => applyT(o.ly, rotF(c, a), false)); }
+        else { const s2 = sk > 0 ? (e.shiftKey ? 1.1 : 1.01) : (e.shiftKey ? 1 / 1.1 : 1 / 1.01); T.forEach(o => scaleLayer(o.ly, c, s2)); }
+        if (prev) pushState(prev); else { D.dirty = true; showFile(); }
+        D.nudgeKey = key; D.nudgeT = now;
+        renderCanvas(); renderInspector();
+        return;
+      }
+    }
     const step = fromU(nudgeU()) * (e.shiftKey ? 10 : 1);
     const dirs = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
     const dd = dirs[e.key];
@@ -3212,7 +3392,7 @@ const Draw = (() => {
     return true;
   }
   function composite() {
-    const vis = D.doc.layers.filter(l => l.vis && l.loops.length);
+    const vis = D.doc.layers.filter(l => l.vis && l.loops.length && !isLine(l));
     if (!vis.length) return null;
     // 足すレイヤー1枚だけなら、円弧をそのまま残せるダカラ
     const simple = vis.length === 1 && vis[0].op === 'add';
@@ -3229,7 +3409,7 @@ const Draw = (() => {
   // 書き出しの大きさ（kind=png ならピクセル、それ以外は用紙の単位）
   function outScale(kind) { return kind === 'png' && unitStr() === 'mm' ? U() * dpi() / 25.4 : U(); }
   function renderSizeInfo() {
-    const ls = D.doc.layers.filter(l => l.vis && l.op === 'add' && l.loops.length);
+    const ls = D.doc.layers.filter(l => l.vis && l.op === 'add' && l.loops.length && !isLine(l));
     if (!ls.length) { $('dSizeInfo').textContent = ''; return; }
     let b = { x: 0, y: 0, w: SIZE, h: SIZE };
     if ($('dCrop').checked) { const bs = ls.map(l => loopsBounds(l.loops)); const x0 = Math.min(...bs.map(q => q.x)), y0 = Math.min(...bs.map(q => q.y)), x1 = Math.max(...bs.map(q => q.x + q.w)), y1 = Math.max(...bs.map(q => q.y + q.h)); b = { x: x0, y: y0, w: x1 - x0, h: y1 - y0 }; }
@@ -3263,7 +3443,8 @@ const Draw = (() => {
     if (!crop) bounds = { x: 0, y: 0, w: SIZE, h: SIZE };
     const k = outScale(kind), png = kind === 'png';
     const W = png ? Math.max(1, Math.round(bounds.w * k)) : f3(bounds.w * k), H = png ? Math.max(1, Math.round(bounds.h * k)) : f3(bounds.h * k);
-    return { d: pathsFn(k, bounds.x, bounds.y), W, H, unit: png ? 'px' : unitStr(), mode, keepsArcs: C.simple && mode !== 'outer', warn: C.warn };
+    const lineD = $('dLines').checked ? D.doc.layers.filter(l => l.vis && isLine(l)).map(l => l.loops.map(L => loopD(shift(L, bounds.x, bounds.y), k)).join('')).join('') : '';
+    return { d: pathsFn(k, bounds.x, bounds.y), lineD, W, H, unit: png ? 'px' : unitStr(), mode, keepsArcs: C.simple && mode !== 'outer', warn: C.warn };
   }
   function shift(L, tx, ty) { const c = clone(L); const tmp = { loops: [c] }; moveLayer(tmp, -tx, -ty); return c; }
   function loopsBounds(loops) {
@@ -3288,7 +3469,8 @@ const Draw = (() => {
     const sw = o.unit === 'mm' ? f3(Math.max(o.W, o.H) / 400) : Math.max(1, Math.round(Math.max(o.W, o.H) / 400));
     const attr = o.mode === 'line' ? `fill="none" stroke="#000" stroke-width="${sw}" stroke-linejoin="round"` : `fill="#000" fill-rule="evenodd"`;
     const u = o.unit === 'mm' ? 'mm' : '';
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${o.W} ${o.H}" width="${o.W}${u}" height="${o.H}${u}">\n<path ${attr} d="${o.d}"/>\n</svg>\n`;
+    const lines = o.lineD ? `<path fill="none" stroke="#000" stroke-width="${sw}" stroke-linejoin="round" d="${o.lineD}"/>\n` : '';
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${o.W} ${o.H}" width="${o.W}${u}" height="${o.H}${u}">\n<path ${attr} d="${o.d}"/>\n${lines}</svg>\n`;
   }
   function doExport(kind) {
     const o = exportData(kind); if (!o) return toast('書き出す形がないダカラ');
@@ -3301,6 +3483,7 @@ const Draw = (() => {
       const p = new Path2D(o.d);
       if (o.mode === 'line') { x.lineWidth = Math.max(1, Math.round(Math.max(o.W, o.H) / 400)); x.lineJoin = 'round'; x.stroke(p); }
       else { x.fillStyle = '#000'; x.fill(p, 'evenodd'); }
+      if (o.lineD) { x.lineWidth = Math.max(1, Math.round(Math.max(o.W, o.H) / 400)); x.lineJoin = 'round'; x.strokeStyle = '#000'; x.stroke(new Path2D(o.lineD)); }
       c.toBlob(b => saveBlob(b, baseName() + '.png', 'png'));
     }
     return o;
